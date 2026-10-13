@@ -365,7 +365,11 @@ Source stays in this private repo. Installers and `latest.yml` (which the update
 
 1. Bump `version` in `package.json`, add a CHANGELOG entry, merge `develop` → `main`.
 2. Tag it: `git tag -a v1.2.0 -m "v1.2.0"` then `git push origin main --tags`.
-3. Publish, using your own GitHub login for the upload (needs write access to the releases repo):
+3. Create the release in the public repo first. electron-builder uploads two files at once, and if both try to create the release, one fails with "Published releases must have a valid tag":
+   ```powershell
+   gh release create v1.2.0 -R drift-creative-systems/bonsai-dashboard-releases --title "Bonsai Dashboard 1.2.0" --notes "What's new: ..."
+   ```
+4. Publish, using your own GitHub login for the upload (needs write access to the releases repo):
    ```powershell
    $env:GH_TOKEN = gh auth token; npm run release; Remove-Item Env:GH_TOKEN
    ```
