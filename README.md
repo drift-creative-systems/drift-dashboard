@@ -6,6 +6,7 @@ A Windows desktop app that shows everything at a glance, so you don't have to op
 |---|---|
 | **Up next** | Next events across all your Google, Outlook and Proton calendars, merged |
 | **Spotify** | What's playing now (or the last track) |
+| **Plex** | Who's streaming from your Plex server right now and what they're watching |
 | **Strava** | This week's run time, walk time and gym sessions (from Monday) |
 | **Xbox** | Last game played |
 | **Email** | One card per inbox (Gmail, Outlook, Proton): unread count + latest 3 emails |
@@ -83,9 +84,9 @@ Everything is added in **Settings → Add an account**: pick the **Type**, give 
 
 Sign-in services (Outlook, Spotify, Strava) open your browser to log in as soon as you save. Approve it, close the tab, and the card fills in.
 
-Suggested order: start with the quick ones (Weather, ClickUp, calendars, Xbox), then email, Slack, Outlook, GitHub, FreeAgent, Spotify and Strava. Support tickets and the uptime monitor need their server updates deployed first.
+Suggested order: start with the quick ones (Weather, ClickUp, calendars, Xbox, Plex), then email, Slack, Outlook, GitHub, FreeAgent, Spotify and Strava. Support tickets and the uptime monitor need their server updates deployed first.
 
-**Card icons:** each card shows the service's logo (Gmail, Proton, Google Calendar, ClickUp, GitHub, Spotify, Strava), the Bonsai mark for support tickets and uptime, or a coloured letter for services with no free logo (Outlook, Slack, Xbox, FreeAgent). To tell several cards of the same type apart, go to **Settings → Edit → Icon** and type an emoji or up to 2 letters, and/or pick a colour. **Use default** puts the colour back. The colour is also used for the card's border and, for calendars, their dots in Up next.
+**Card icons:** each card shows the service's logo (Gmail, Proton, Google Calendar, ClickUp, GitHub, Spotify, Plex, Strava), the Bonsai mark for support tickets and uptime, or a coloured letter for services with no free logo (Outlook, Slack, Xbox, FreeAgent). To tell several cards of the same type apart, go to **Settings → Edit → Icon** and type an emoji or up to 2 letters, and/or pick a colour. **Use default** puts the colour back. The colour is also used for the card's border and, for calendars, their dots in Up next.
 
 ### Gmail inboxes (×7)
 
@@ -212,6 +213,20 @@ The card shows **Due this week** (including overdue) and **Recent activity on yo
    - Tick **Web API**, accept the terms → **Save**
 3. Open the app → **Settings** → copy the **Client ID**.
 4. In the dashboard: **Type: Spotify**, paste the Client ID. **Save**. Your browser opens; click **Agree**.
+
+### Plex
+
+No sign-in or developer app needed. The card talks straight to your own Plex Media Server, so this PC needs to be on the same network as the server.
+
+1. **Find the server address.** In Plex Web go to **Settings → (your server) → Remote Access**: the private IP is shown there, e.g. `192.168.1.20`. The port is `32400` unless you've changed it.
+2. **Get your Plex token.** In Plex Web, open any film or episode → **⋯ → Get Info → View XML**. A new tab opens; the address ends in `X-Plex-Token=…`. Copy that value (or the whole address: the dashboard pulls the token out for you).
+3. In the dashboard: **Type: Plex**, Server address `http://192.168.1.20:32400` (or just `192.168.1.20`), paste the token. **Save**.
+
+The card checks every 30 seconds and shows one row per stream: who's watching, the show (with season and episode) or film, which device, playing or paused, time left with a progress bar, and whether it's a direct play or a transcode, plus the resolution and **Remote** for streams from outside your network. The heading shows the number of streams, how many are transcoding and the total bandwidth. Click a stream or **Open Plex** to open Plex Web.
+
+Plain `http://` is only accepted for local addresses (192.168.x.x, 10.x.x.x, 172.16–31.x.x, localhost, `.local`); anything else must be `https://`. Posters are fetched by the app and passed to the card as images, so the token never leaves the main process.
+
+The token is your Plex account's sign-in token, so treat it like a password. It's stored encrypted like the other keys. If you sign out of all devices in Plex, the token changes and the card asks for a new one.
 
 ### Strava
 
