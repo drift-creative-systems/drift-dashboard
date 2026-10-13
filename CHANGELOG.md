@@ -2,9 +2,11 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] - 2026-10-13
+## [1.1.0] - 2026-10-13
 
 ### Added
+- Automatic updates (electron-updater 6.8.9). The installed app checks on start and every 6 hours, downloads in the background and shows a "Restart to update" bar; "Later" installs on quit. Settings has a new Updates panel with **Check for updates**. Disabled in `npm start` and demo mode.
+- Public releases repo `drift-creative-systems/bonsai-dashboard-releases` for installers and `latest.yml`, so the app can update without a token while the source stays private. `npm run release` publishes; `npm run dist` builds without uploading.
 - "Right now" cards can be rearranged and resized. Hover a card for its tools (bottom right): drag the grip (⠿) to move it, or focus the grip and use the arrow keys; ⇔ cycles the width through 1, 2 and 3 columns; the height button cycles normal, tall (Up next shows up to 12 events) and compact (scrolls, Up next shows 3). Moves and resizes are announced to screen readers.
 - Layout is saved to `config.json` (`layout.now`: order and sizes), validated in the main process. New accounts are added at the end.
 

@@ -63,11 +63,17 @@ You'll see "Nothing to show yet". Click **Settings** and add your accounts using
 npm run dist
 ```
 
-This creates `dist\Bonsai Dashboard Setup <version>.exe` (e.g. `1.0.0`). Released versions are also attached to each [GitHub release](https://github.com/drift-creative-systems/bonsai-desktop-dashboard/releases), so you can download the installer there instead of building it. Run it to install the app like any other program, with a Start menu entry and a desktop shortcut. Then you can tick **Start with Windows** in Settings.
+This creates `dist\Bonsai Dashboard Setup <version>.exe` (e.g. `1.1.0`). Released installers are also on the public [releases page](https://github.com/drift-creative-systems/bonsai-dashboard-releases/releases/latest), so anyone (e.g. the Realityhouse team) can download one there instead of building it. Run it to install the app like any other program, with a Start menu entry and a desktop shortcut. Then you can tick **Start with Windows** in Settings.
 
 > Windows SmartScreen will warn you that the installer isn't signed. Click **More info → Run anyway**. Signing needs a paid code-signing certificate, which isn't worth it for an internal tool.
 
 Your accounts are stored per Windows user (see [Where your data lives](#where-your-data-lives)), so the installed app and `npm start` share the same accounts.
+
+### Updates
+
+From version 1.1.0 the installed app updates itself. It checks when it opens and every 6 hours, downloads new versions in the background, then shows **"Bonsai Dashboard 1.x.x is ready" → Restart to update**. Choose **Later** and it installs the next time you quit. **Settings → Updates → Check for updates** checks straight away.
+
+> Version 1.0.0 has no updater: install 1.1.0 by hand once from the [releases page](https://github.com/drift-creative-systems/bonsai-dashboard-releases/releases/latest). Your accounts and layout are kept.
 
 ---
 
@@ -344,12 +350,27 @@ npm start        # run the app
 npm run demo     # run with sample data (separate, throwaway settings)
 npm run check    # syntax-check every JS file
 npm run icons    # regenerate assets/icon.png and assets/tray.png
-npm run dist     # build the Windows installer into dist\
+npm run dist     # build the Windows installer into dist\ (no upload)
+npm run release  # build and publish an update (see below)
 ```
 
 In development, **Ctrl+Shift+I** opens DevTools, and window errors are echoed to the terminal.
 
 > If you start it from a terminal inside the VS Code extension host and Electron behaves like plain Node (`Cannot read properties of undefined (reading 'setPath')`), clear the variable first: `Remove-Item Env:ELECTRON_RUN_AS_NODE`.
+
+### Releasing a new version
+
+Source stays in this private repo. Installers and `latest.yml` (which the updater reads) go to the public repo [drift-creative-systems/bonsai-dashboard-releases](https://github.com/drift-creative-systems/bonsai-dashboard-releases), which holds nothing else. No token is built into the app.
+
+1. Bump `version` in `package.json`, add a CHANGELOG entry, merge `develop` → `main`.
+2. Tag it: `git tag -a v1.2.0 -m "v1.2.0"` then `git push origin main --tags`.
+3. Publish, using your own GitHub login for the upload (needs write access to the releases repo):
+   ```powershell
+   $env:GH_TOKEN = gh auth token; npm run release; Remove-Item Env:GH_TOKEN
+   ```
+   This builds the installer and uploads it, its `.blockmap` and `latest.yml` to a release named after the version. Installed copies pick it up on next launch, or within 6 hours.
+
+Never commit `GH_TOKEN`.
 
 ### How it's built
 
@@ -358,6 +379,7 @@ src/main/            Electron main process (all network access + storage)
   main.js            window, tray, IPC, start with Windows
   preload.js         the only bridge to the window (fixed, small API)
   store.js           config.json + encrypted secrets.json
+  updater.js         checks for, downloads and installs updates (installed app only)
   scheduler.js       polls each account, backoff on errors, pauses while hidden
   oauth.js           browser sign-in on a loopback port (PKCE)
   http.js            fetch wrapper: timeouts + readable errors

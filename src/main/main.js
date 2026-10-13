@@ -10,6 +10,7 @@ const path = require('path');
 const store = require('./store');
 const providers = require('./providers');
 const Scheduler = require('./scheduler');
+const updater = require('./updater');
 
 const ASSETS = path.join(__dirname, '..', '..', 'assets');
 const ALLOWED_PROTOCOLS = ['https:', 'slack:'];
@@ -68,6 +69,7 @@ function state() {
 		accounts: accountsForRenderer(),
 		settings: store.settings(),
 		layout: store.layout(),
+		update: updater.current(),
 		cards: scheduler.all(),
 	};
 }
@@ -260,6 +262,9 @@ function registerIpc() {
 	ipcMain.handle('layout:save', (_e, section, data) => store.saveLayout(section, data));
 
 	ipcMain.handle('link:open', (_e, url) => openExternal(url));
+
+	ipcMain.handle('update:check', () => updater.check());
+	ipcMain.handle('update:install', () => updater.install());
 }
 
 /**
@@ -329,6 +334,13 @@ if (!app.requestSingleInstanceLock()) {
 		applyLoginItem();
 		scheduler.start();
 		devScreenshot();
+		updater.init({
+			send: (status) => send('update:status', status),
+			demo: DEMO,
+			beforeInstall: () => {
+				quitting = true;
+			},
+		});
 
 		// After sleep, data is stale: refresh if the window is in use.
 		powerMonitor.on('resume', () => {

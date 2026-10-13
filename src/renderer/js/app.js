@@ -256,6 +256,7 @@
 		renderDashboard();
 
 		window.dashboard.onCard(updateCard);
+		window.BD.update.init(state.update);
 
 		toggle.addEventListener('click', () => showSettings(settings.hidden));
 		document.getElementById('refresh-all').addEventListener('click', () => window.dashboard.refresh());

@@ -1122,3 +1122,25 @@ details[open] summary {
 	gap: 4px;
 	flex-wrap: wrap;
 }
+
+/* ------------------------------------------------------------ Update bar */
+
+.update-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	margin: 16px 24px 0;
+	padding: 10px 16px;
+	background: var(--surface);
+	border: 1px solid var(--accent);
+	border-radius: var(--radius);
+}
+
+.update-bar[hidden] {
+	display: none;
+}
+
+.update-bar .js-update-text {
+	flex: 1 1 240px;
+}

@@ -14,6 +14,11 @@ contextBridge.exposeInMainWorld('dashboard', {
 	saveSettings: (values) => ipcRenderer.invoke('settings:save', values),
 	saveLayout: (section, data) => ipcRenderer.invoke('layout:save', section, data),
 	openLink: (url) => ipcRenderer.invoke('link:open', url),
+	checkForUpdates: () => ipcRenderer.invoke('update:check'),
+	installUpdate: () => ipcRenderer.invoke('update:install'),
+	onUpdate: (callback) => {
+		ipcRenderer.on('update:status', (_event, status) => callback(status));
+	},
 	onCard: (callback) => {
 		ipcRenderer.on('card:update', (_event, card) => callback(card));
 	},
