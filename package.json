@@ -1,0 +1,48 @@
+{
+  "name": "bonsai-desktop-dashboard",
+  "productName": "Bonsai Dashboard",
+  "version": "1.0.0",
+  "description": "Everything at a glance: Spotify, email, calendars, Slack, ClickUp, Strava, Xbox and support tickets.",
+  "author": "The Bonsai Digital Collective",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "demo": "electron . --demo",
+    "icons": "node scripts/make-icons.js",
+    "logos": "node scripts/make-logos.js",
+    "check": "node scripts/check.js",
+    "dist": "electron-builder --win"
+  },
+  "build": {
+    "appId": "uk.co.bonsaidigitalcollective.dashboard",
+    "productName": "Bonsai Dashboard",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  },
+  "dependencies": {
+    "imapflow": "2.4.0",
+    "node-ical": "0.27.3"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "electron-builder": "26.15.3",
+    "simple-icons": "16.35.0"
+  }
+}
