@@ -231,24 +231,37 @@ function layout() {
 }
 
 /**
- * Save a section's card order and sizes, keeping only well-formed values:
- * order = card IDs (account IDs or "upnext"), sizes = { id: { w: 1–3, h } }.
+ * Save a section's columns and card sizes, keeping only well-formed values:
+ * count = 2–5, columns = up to 5 lists of card IDs (account IDs or
+ * "upnext", each used once), sizes = { id: { h } }.
  */
 function saveLayout(section, data) {
 	if (!SECTION_IDS.includes(section)) {
 		throw new Error('This section can’t be rearranged.');
 	}
 	const isId = (id) => typeof id === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(id);
-	const order = Array.isArray(data && data.order) ? [...new Set(data.order.filter(isId))] : [];
+	const count = Number(data && data.count);
+	const seen = new Set();
+	const columns = (Array.isArray(data && data.columns) ? data.columns : [])
+		.slice(0, 5)
+		.map((col) => (Array.isArray(col) ? col : []).filter((id) => {
+			if (!isId(id) || seen.has(id)) {
+				return false;
+			}
+			seen.add(id);
+			return true;
+		}));
 	const sizes = {};
 	for (const [id, size] of Object.entries((data && data.sizes) || {})) {
-		const w = Number(size && size.w);
-		if (isId(id) && [1, 2, 3].includes(w) && HEIGHTS.includes(size.h)) {
-			sizes[id] = { w, h: size.h };
+		if (isId(id) && size && HEIGHTS.includes(size.h)) {
+			sizes[id] = { h: size.h };
 		}
 	}
 	const cfg = config();
-	cfg.layout = { ...(cfg.layout || {}), [section]: { order, sizes } };
+	cfg.layout = {
+		...(cfg.layout || {}),
+		[section]: { count: [2, 3, 4, 5].includes(count) ? count : 4, columns, sizes },
+	};
 	saveConfig();
 	return cfg.layout;
 }

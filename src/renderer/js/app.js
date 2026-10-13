@@ -37,7 +37,7 @@
 
 	function renderUpNext() {
 		const accounts = calendarAccounts();
-		const { h: height } = window.BD.layout.sizeOf('now', 'upnext', 2);
+		const { h: height } = window.BD.layout.sizeOf('now', 'upnext');
 		return accounts.length ? upNext(accounts.map(card), accounts, { rows: UPNEXT_ROWS[height] || 5 }) : null;
 	}
 
@@ -79,13 +79,13 @@
 		const sections = [];
 		for (const section of SECTIONS) {
 			const accounts = state.accounts.filter((a) => (META[a.provider] || {}).section === section.id);
-			let items = [];
-			const entries = []; // For rearrangeable sections: { id, node, title, defaultW }.
+			const items = [];
+			const entries = []; // For rearrangeable sections: { id, node, title }.
 
 			if ('now' === section.id) {
 				upNextNode = renderUpNext();
 				if (upNextNode) {
-					entries.push({ id: 'upnext', node: upNextNode, title: 'Up next', defaultW: 2 });
+					entries.push({ id: 'upnext', node: upNextNode, title: 'Up next' });
 				}
 			}
 			for (const account of accounts) {
@@ -96,21 +96,20 @@
 					entries.push({ id: account.id, node, title: account.label || providerName(account.provider) });
 				}
 			}
-			// "Right now" cards can be dragged and resized.
-			if ('now' === section.id) {
-				items = window.BD.layout.slots('now', entries);
-			}
-			if (!items.length) {
+			if (!items.length && !entries.length) {
 				continue;
 			}
 
 			const headingId = `section-${section.id}`;
+			// "Right now" is a board of columns you can drag cards between.
+			const rearrangeable = 'now' === section.id;
 			sections.push(h('section', { class: 'section', 'aria-labelledby': headingId },
 				h('div', { class: 'section__head' },
 					h('h2', { class: 'section__title', id: headingId }, section.title),
-					countFor(section.id, accounts)
+					countFor(section.id, accounts),
+					rearrangeable ? window.BD.layout.columnPicker('now') : null
 				),
-				h('div', { class: section.gridClass }, items)
+				rearrangeable ? window.BD.layout.board('now', entries) : h('div', { class: section.gridClass }, items)
 			));
 		}
 		dashboard.replaceChildren(...sections);
@@ -252,6 +251,7 @@
 					upNextNode = fresh;
 				}
 			},
+			onColumns: renderDashboard,
 		});
 		renderDashboard();
 

@@ -260,41 +260,71 @@ select {
 	align-items: start;
 }
 
-.grid--now {
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	grid-auto-flow: row; /* Not dense: cards stay in the order you put them. */
-	container-type: inline-size;
+/* ------------------------------------------------- Rearrangeable board */
+
+/* --cols columns side by side. Each track is at least 1/--cols of the width
+   (so exactly --cols fit), but never under 260px: in a narrow window the
+   extra columns wrap onto the next line instead of squashing. */
+.board {
+	--cols: 4;
+	display: grid;
+	gap: var(--gap);
+	grid-template-columns: repeat(auto-fill, minmax(max(260px, calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols))), 1fr));
+	align-items: start;
 }
 
-/* ---------------------------------------------------- Rearrangeable slots */
+.board__col {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap);
+	min-width: 0;
+	min-height: 120px; /* Empty columns still take a drop. */
+	border-radius: var(--radius);
+}
+
+.board.is-dragging .board__col {
+	outline: 1px dashed var(--border);
+	outline-offset: 4px;
+}
+
+.cols-picker {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	color: var(--muted);
+}
+
+.cols-picker__label {
+	margin-right: 4px;
+}
+
+.cols-picker__btn {
+	min-width: 26px;
+	height: 24px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-sm);
+	background: transparent;
+	color: var(--muted);
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.cols-picker__btn:hover {
+	color: var(--text);
+}
+
+.cols-picker__btn[aria-pressed="true"] {
+	background: var(--surface-2);
+	border-color: var(--accent);
+	color: var(--text);
+}
 
 .slot {
 	position: relative;
 	min-width: 0;
 	display: grid;
-}
-
-.slot.w-2 {
-	grid-column: span 2;
-}
-
-.slot.w-3 {
-	grid-column: span 3;
-}
-
-/* Fewer columns fit in a narrow window: shrink wide cards rather than overflow.
-   3 columns need 3 × 280px + 2 gaps; 2 columns need 2 × 280px + 1 gap. */
-@container (max-width: 871px) {
-	.slot.w-3 {
-		grid-column: span 2;
-	}
-}
-
-@container (max-width: 575px) {
-	.slot.w-2,
-	.slot.w-3 {
-		grid-column: auto;
-	}
 }
 
 .slot.h-tall > .card {

@@ -310,13 +310,14 @@ It shows the temperature now, what it feels like, wind, today's high and low and
 
 ## Arranging the "Right now" cards
 
-Hover a card in **Right now** to show its tools in the bottom-right corner:
+**Right now** is laid out in columns, and each column is a stack of cards. Pick how many columns with **Columns 2 3 4 5** beside the heading (4 to start). In a narrow window the extra columns wrap onto a second line.
 
-- **⠿** drag to move the card. Or click it (or Tab to it) and use the arrow keys to move it one place at a time.
-- **⇔ 1/2/3** changes the width: 1, 2 or 3 columns. In a narrow window wide cards shrink to fit.
+Hover a card to show its tools in the bottom-right corner:
+
+- **⠿** drag the card above or below any card in any column, or into an empty column. Or click it (or Tab to it) and use the arrow keys: **↑ ↓** move it within its column, **← →** move it to the next column.
 - **↕** changes the height: normal → tall → compact. Tall Up next shows up to 12 events; compact shows 3 and other cards scroll.
 
-Your layout is saved straight away and kept between restarts. New cards go at the end.
+Your layout is saved straight away and kept between restarts. New cards go into the column with the fewest cards. If you switch to fewer columns, the cards from the removed columns go into the last one, and switching back puts them where they were.
 
 ---
 

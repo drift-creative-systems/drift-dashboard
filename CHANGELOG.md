@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.0] - 2026-10-13
+
+### Changed
+- "Right now" is now a board of columns (2–5, picked beside the heading, 4 by default), so cards stack under each other with no gaps, e.g. Strava directly under Spotify. Drag a card into any column, or use the arrow keys on its grip (↑ ↓ within a column, ← → between columns).
+- Saved layout is now `{ count, columns, sizes }`. A 1.1.0 layout is converted automatically: its order is dealt out across the columns left to right.
+
+### Removed
+- The width button on "Right now" cards (each card is one column wide).
+
 ## [1.1.0] - 2026-10-13
 
 ### Added

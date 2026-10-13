@@ -29,7 +29,7 @@
 	const CAL_COLOURS = ['#ee4367', '#4f9dff', '#f2b134', '#3fb97a', '#b07cff', '#ff8a4c', '#2ec4c6', '#e84fd1'];
 
 	const SECTIONS = [
-		{ id: 'now', title: 'Right now', gridClass: 'grid grid--now' },
+		{ id: 'now', title: 'Right now', gridClass: 'board' },
 		{ id: 'email', title: 'Email', gridClass: 'grid' },
 		{ id: 'slack', title: 'Slack', gridClass: 'grid' },
 		{ id: 'clickup', title: 'ClickUp', gridClass: 'grid' },
