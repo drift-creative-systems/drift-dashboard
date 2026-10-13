@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.4.0] - 2026-10-13
+
+### Added
+- Plex card in "Right now": who is streaming from your Plex Media Server and what they're watching. One row per stream with poster, user, title (show + S01E03 + episode name, or film + year, or track + artist), device, playing/paused, time left and progress, plus Direct/Transcode, resolution and Remote pills. Heading shows stream count, transcodes and total bandwidth. Polls `/status/sessions` every 30 seconds.
+- Plex setup: server address (plain `http://` allowed only for private LAN addresses, port 32400 added if missing) and the X-Plex-Token, which can be pasted on its own or as the whole View XML address. Posters are fetched in the main process and sent to the card as data URIs (cached 6 hours, 200 KB cap), so the token never reaches the window.
+- Plex logo from Simple Icons, and a demo card for `npm run demo`.
+
 ## [1.3.0] - 2026-10-13
 
 ### Added

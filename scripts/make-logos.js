@@ -21,6 +21,7 @@ const WANTED = {
 	clickup: 'clickup',
 	github: 'github',
 	spotify: 'spotify',
+	plex: 'plex',
 	strava: 'strava',
 };
 
