@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('dashboard', {
 	refresh: (id) => ipcRenderer.invoke('cards:refresh', id),
 	saveSettings: (values) => ipcRenderer.invoke('settings:save', values),
 	saveLayout: (section, data) => ipcRenderer.invoke('layout:save', section, data),
+	saveSectionOrder: (order) => ipcRenderer.invoke('layout:sections', order),
 	openLink: (url) => ipcRenderer.invoke('link:open', url),
 	checkForUpdates: () => ipcRenderer.invoke('update:check'),
 	installUpdate: () => ipcRenderer.invoke('update:install'),

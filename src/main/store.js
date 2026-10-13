@@ -266,6 +266,18 @@ function saveLayout(section, data) {
 	return cfg.layout;
 }
 
+/**
+ * Save the order of the dashboard sections below "Right now" (section IDs
+ * such as "email", each once).
+ */
+function saveSectionOrder(order) {
+	const ids = Array.isArray(order) ? order.filter((id) => typeof id === 'string' && /^[a-z]{1,32}$/.test(id)) : [];
+	const cfg = config();
+	cfg.layout = { ...(cfg.layout || {}), sectionOrder: [...new Set(ids)].slice(0, 20) };
+	saveConfig();
+	return cfg.layout;
+}
+
 function windowState() {
 	return config().window;
 }
@@ -301,6 +313,7 @@ module.exports = {
 	saveSettings,
 	layout,
 	saveLayout,
+	saveSectionOrder,
 	windowState,
 	saveWindowState,
 	dataDir: dir,

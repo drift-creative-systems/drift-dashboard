@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.3.0] - 2026-10-13
+
+### Added
+- Sections below "Right now" (Email, Slack, ClickUp, Money, Support & uptime, GitHub) can be reordered: drag the ⠿ handle on the heading, or use ▲ ▼ (keyboard-accessible, announced to screen readers). "Right now" stays at the top. Order is saved to `config.json` (`layout.sectionOrder`); sections with no accounts yet keep their place.
+
 ## [1.2.0] - 2026-10-13
 
 ### Changed

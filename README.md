@@ -319,6 +319,10 @@ Hover a card to show its tools in the bottom-right corner:
 
 Your layout is saved straight away and kept between restarts. New cards go into the column with the fewest cards. If you switch to fewer columns, the cards from the removed columns go into the last one, and switching back puts them where they were.
 
+### Reordering sections
+
+**Right now** always stays at the top. The sections below it (Email, Slack, ClickUp, Money, Support & uptime, GitHub) can go in any order: hover a section heading and either drag its **⠿** handle up or down, or use **▲ ▼**. The order is saved straight away.
+
 ---
 
 ## Where your data lives

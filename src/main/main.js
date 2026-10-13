@@ -260,6 +260,7 @@ function registerIpc() {
 	});
 
 	ipcMain.handle('layout:save', (_e, section, data) => store.saveLayout(section, data));
+	ipcMain.handle('layout:sections', (_e, order) => store.saveSectionOrder(order));
 
 	ipcMain.handle('link:open', (_e, url) => openExternal(url));
 

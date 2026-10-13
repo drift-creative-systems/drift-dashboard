@@ -77,7 +77,8 @@
 		}
 
 		const sections = [];
-		for (const section of SECTIONS) {
+		// "Right now" stays first; the others follow your saved order.
+		for (const section of window.BD.layout.orderSections(SECTIONS)) {
 			const accounts = state.accounts.filter((a) => (META[a.provider] || {}).section === section.id);
 			const items = [];
 			const entries = []; // For rearrangeable sections: { id, node, title }.
@@ -103,16 +104,22 @@
 			const headingId = `section-${section.id}`;
 			// "Right now" is a board of columns you can drag cards between.
 			const rearrangeable = 'now' === section.id;
-			sections.push(h('section', { class: 'section', 'aria-labelledby': headingId },
+			const el = h('section', { class: 'section', 'aria-labelledby': headingId, data: { section: section.id } },
 				h('div', { class: 'section__head' },
 					h('h2', { class: 'section__title', id: headingId }, section.title),
 					countFor(section.id, accounts),
 					rearrangeable ? window.BD.layout.columnPicker('now') : null
 				),
 				rearrangeable ? window.BD.layout.board('now', entries) : h('div', { class: section.gridClass }, items)
-			));
+			);
+			// Every other section can be moved up and down.
+			if (!rearrangeable) {
+				el.firstChild.append(window.BD.layout.sectionTools(el, section.title));
+			}
+			sections.push(el);
 		}
 		dashboard.replaceChildren(...sections);
+		window.BD.layout.refreshSections(dashboard);
 	}
 
 	/**
@@ -252,6 +259,10 @@
 				}
 			},
 			onColumns: renderDashboard,
+			setSectionOrder: (order) => {
+				state.layout = { ...(state.layout || {}), sectionOrder: order };
+				window.dashboard.saveSectionOrder(order).catch((err) => console.error('Couldn’t save the section order:', err));
+			},
 		});
 		renderDashboard();
 

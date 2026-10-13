@@ -272,9 +272,152 @@
 		return el;
 	}
 
+	/* ---------------------------------------------------------- Section order */
+
+	const FIXED_SECTION = 'now'; // "Right now" always stays at the top.
+	let fullOrder = []; // Every movable section ID, including ones not shown.
+	let draggingSection = null;
+
+	/**
+	 * Sections in display order: "Right now" first, then the saved order.
+	 * Sections not in the saved order (new ones) keep their default place.
+	 */
+	function orderSections(list) {
+		const saved = ((api.getLayout() || {}).sectionOrder) || [];
+		const rank = (id) => {
+			const i = saved.indexOf(id);
+			return -1 === i ? saved.length + list.findIndex((s) => s.id === id) : i;
+		};
+		const rest = list.filter((s) => s.id !== FIXED_SECTION).sort((a, b) => rank(a.id) - rank(b.id));
+		fullOrder = rest.map((s) => s.id);
+		return [...list.filter((s) => s.id === FIXED_SECTION), ...rest];
+	}
+
+	function movableSections(dashboard) {
+		return [...dashboard.querySelectorAll(':scope > section[data-section]')]
+			.filter((s) => s.dataset.section !== FIXED_SECTION);
+	}
+
+	/**
+	 * Save the order on screen. Hidden sections (no accounts yet) keep their
+	 * place: the visible sections are refilled into their own positions.
+	 */
+	function persistSections(dashboard) {
+		const visible = movableSections(dashboard).map((s) => s.dataset.section);
+		const shown = new Set(visible);
+		let next = 0;
+		fullOrder = fullOrder.map((id) => (shown.has(id) ? visible[next++] : id));
+		api.setSectionOrder(fullOrder);
+	}
+
+	/** Mark the first section's "up" and the last one's "down" as unavailable. */
+	function refreshSections(dashboard) {
+		const list = movableSections(dashboard);
+		list.forEach((section, i) => {
+			const up = section.querySelector('.js-section-up');
+			const down = section.querySelector('.js-section-down');
+			if (up && down) {
+				up.setAttribute('aria-disabled', String(0 === i));
+				down.setAttribute('aria-disabled', String(list.length - 1 === i));
+			}
+		});
+	}
+
+	function moveSection(sectionEl, title, direction) {
+		const dashboard = sectionEl.parentNode;
+		const list = movableSections(dashboard);
+		const index = list.indexOf(sectionEl);
+		const target = list[index + ('up' === direction ? -1 : 1)];
+		if (!target) {
+			announce(`${title} is already ${'up' === direction ? 'at the top' : 'at the bottom'}`);
+			return;
+		}
+		dashboard.insertBefore(sectionEl, 'up' === direction ? target : target.nextSibling);
+		// Moving an element drops focus; keep it on the button that was pressed.
+		sectionEl.querySelector(`.js-section-${direction}`).focus();
+		persistSections(dashboard);
+		refreshSections(dashboard);
+		announce(`${title} moved ${direction}, now ${index + ('up' === direction ? 0 : 2)} of ${list.length}`);
+	}
+
+	/** While a section is dragged over another: above or below by pointer half. */
+	function onSectionDragOver(event) {
+		const target = event.currentTarget;
+		if (!draggingSection || target === draggingSection) {
+			return;
+		}
+		event.preventDefault();
+		event.dataTransfer.dropEffect = 'move';
+		const rect = target.getBoundingClientRect();
+		const ref = event.clientY > rect.top + rect.height / 2 ? target.nextSibling : target;
+		if (ref !== draggingSection && ref !== draggingSection.nextSibling) {
+			target.parentNode.insertBefore(draggingSection, ref);
+		}
+	}
+
+	/**
+	 * Move handle + up/down buttons for a section heading. The handle is for
+	 * mouse dragging; keyboard users have the buttons.
+	 */
+	function sectionTools(sectionEl, title) {
+		const grip = h('span', { class: 'section__grip', title: 'Drag to move this section', 'aria-hidden': 'true' }, '⠿');
+		const up = h('button', {
+			type: 'button',
+			class: 'section__btn js-section-up',
+			title: 'Move up',
+			'aria-label': `Move ${title} section up`,
+			on: { click: () => moveSection(sectionEl, title, 'up') },
+		}, '▲');
+		const down = h('button', {
+			type: 'button',
+			class: 'section__btn js-section-down',
+			title: 'Move down',
+			'aria-label': `Move ${title} section down`,
+			on: { click: () => moveSection(sectionEl, title, 'down') },
+		}, '▼');
+
+		grip.addEventListener('pointerdown', () => {
+			sectionEl.draggable = true;
+		});
+		sectionEl.addEventListener('dragstart', (event) => {
+			// Links inside cards are draggable too; only the section itself counts.
+			if (event.target !== sectionEl) {
+				return;
+			}
+			draggingSection = sectionEl;
+			sectionEl.classList.add('is-dragging');
+			event.dataTransfer.effectAllowed = 'move';
+			event.dataTransfer.setData('text/plain', sectionEl.dataset.section);
+		});
+		sectionEl.addEventListener('dragend', (event) => {
+			if (event.target !== sectionEl) {
+				return;
+			}
+			sectionEl.classList.remove('is-dragging');
+			sectionEl.draggable = false;
+			draggingSection = null;
+			persistSections(sectionEl.parentNode);
+			refreshSections(sectionEl.parentNode);
+		});
+		// pointerup without a drag: stop the section being draggable again.
+		grip.addEventListener('pointerup', () => {
+			if (!draggingSection) {
+				sectionEl.draggable = false;
+			}
+		});
+		sectionEl.addEventListener('dragover', onSectionDragOver);
+		sectionEl.addEventListener('drop', (event) => {
+			if (draggingSection) {
+				event.preventDefault();
+			}
+		});
+
+		return h('div', { class: 'section__tools' }, grip, up, down);
+	}
+
 	function init(options) {
 		api = options;
 	}
 
-	window.BD.layout = { init, board, columnPicker, sizeOf };
+	window.BD.layout = { init, board, columnPicker, sizeOf, orderSections, sectionTools, refreshSections };
 }());
