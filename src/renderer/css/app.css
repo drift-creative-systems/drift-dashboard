@@ -871,6 +871,64 @@ select {
 	width: var(--value, 0%);
 }
 
+/* Plex: one row per stream. */
+.streams {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 10px;
+}
+
+.stream {
+	display: grid;
+	grid-template-columns: 48px 1fr;
+	gap: 10px;
+	align-items: start;
+	width: 100%;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	padding: 4px;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	min-width: 0;
+}
+
+.stream:hover {
+	background: var(--surface-2);
+}
+
+.stream:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+.stream__art {
+	width: 48px;
+	height: 72px;
+	border-radius: 6px;
+	object-fit: cover;
+	background: var(--surface-2);
+}
+
+.stream__art.is-square {
+	height: 48px;
+}
+
+.stream__pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin: 2px 0;
+}
+
+.media__state.is-paused {
+	color: var(--muted);
+}
+
 /* Stats (Strava, tickets). */
 .stats {
 	display: grid;

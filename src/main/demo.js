@@ -12,6 +12,7 @@ const accounts = [
 	{ id: 'demo-ics-1', provider: 'ics', label: 'Gak Design', config: {} },
 	{ id: 'demo-ics-2', provider: 'ics', label: 'Personal', config: { icon: '🏠', icon_color: '#3fb97a' } },
 	{ id: 'demo-spotify', provider: 'spotify', label: '', config: {} },
+	{ id: 'demo-plex', provider: 'plex', label: '', config: {} },
 	{ id: 'demo-strava', provider: 'strava', label: '', config: {} },
 	{ id: 'demo-xbox', provider: 'xbox', label: '', config: {} },
 	{ id: 'demo-gmail-1', provider: 'gmail', label: 'Gak Design', config: {} },
@@ -72,6 +73,14 @@ function data(account) {
 			] };
 		case 'demo-spotify':
 			return { playing: true, progress: 95000, track: { title: 'Teardrop', artist: 'Massive Attack', album: 'Mezzanine', image: null, url: 'https://open.spotify.com/', duration: 330000 } };
+		case 'demo-plex':
+			return {
+				count: 2, transcodes: 1, bandwidth: 14600, url: 'https://app.plex.tv/',
+				streams: [
+					{ kind: 'episode', title: 'Slow Horses', sub: 'S04E03 · Hello Goodbye', user: 'Ben', device: 'Living Room TV', state: 'playing', remote: false, transcoding: false, resolution: '1080', bandwidth: 10200, duration: 52 * MIN, offset: 31 * MIN, image: null },
+					{ kind: 'movie', title: 'The Holdovers', sub: '2023', user: 'Lex', device: 'iPad', state: 'paused', remote: true, transcoding: true, resolution: '720', bandwidth: 4400, duration: 133 * MIN, offset: 22 * MIN, image: null },
+				],
+			};
 		case 'demo-strava':
 			return { weekStart: iso(-2 * 24 * HOUR), totals: {
 				run: { seconds: 6420, metres: 18400, count: 3 },

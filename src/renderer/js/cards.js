@@ -17,6 +17,7 @@
 		clickup: { icon: 'C', brand: '#7b68ee', section: 'clickup' },
 		tickets: { icon: 'T', brand: '#ee4367', section: 'tickets' },
 		spotify: { icon: '♫', brand: '#1a9e4b', section: 'now' },
+		plex: { icon: '▶', brand: '#e5a00d', section: 'now' },
 		strava: { icon: 'S', brand: '#e34402', section: 'now' },
 		xbox: { icon: 'X', brand: '#107c10', section: 'now' },
 		weather: { icon: '☀', brand: '#d98a00', section: 'now' },
@@ -183,6 +184,56 @@
 				)
 			),
 			d.playing ? h('div', { class: 'progress', role: 'presentation' }, h('div', { class: 'progress__bar', style: { '--value': `${pct}%` } })) : null
+		);
+	}
+
+	/* ----------------------------------------------------------------- Plex */
+
+	const PLEX_STATE = { playing: 'Playing', paused: 'Paused', buffering: 'Buffering' };
+
+	function mbps(kbps) {
+		return `${(kbps / 1000).toFixed(kbps >= 10000 ? 0 : 1)} Mbps`;
+	}
+
+	function plexStream(s, url) {
+		const pct = s.duration ? Math.min(100, Math.round((s.offset / s.duration) * 100)) : 0;
+		const left = s.duration ? Math.max(0, (s.duration - s.offset) / 1000) : 0;
+		const pills = [
+			h('span', { class: ['pill', s.transcoding ? 'pill--warning' : 'pill--success'] }, s.transcoding ? 'Transcode' : 'Direct'),
+			s.resolution ? h('span', { class: 'pill' }, /^\d+$/.test(s.resolution) ? `${s.resolution}p` : s.resolution) : null,
+			s.remote ? h('span', { class: 'pill' }, 'Remote') : null,
+		];
+		return h('li', null,
+			h('button', { type: 'button', class: 'stream', on: { click: () => open(url) }, 'aria-label': `${s.user} is watching ${s.title}${s.sub ? `, ${s.sub}` : ''} on ${s.device}. Open Plex` },
+				s.image
+					? h('img', { class: ['stream__art', 'track' === s.kind && 'is-square'], src: s.image, alt: '', width: 48, height: 'track' === s.kind ? 48 : 72 })
+					: h('span', { class: ['stream__art', 'track' === s.kind && 'is-square'] }),
+				h('span', { class: 'media__body' },
+					h('span', { class: ['media__state', 'playing' !== s.state && 'is-paused'] }, `${PLEX_STATE[s.state] || s.state} · ${s.user}`),
+					h('span', { class: 'media__title' }, s.title),
+					s.sub ? h('span', { class: 'media__sub' }, s.sub) : null,
+					h('span', { class: 'row__sub' }, [s.device, left ? `${duration(left)} left` : null].filter(Boolean).join(' · ')),
+					h('span', { class: 'stream__pills' }, pills),
+					s.duration ? h('span', { class: 'progress', role: 'presentation' }, h('span', { class: 'progress__bar', style: { '--value': `${pct}%` } })) : null
+				)
+			)
+		);
+	}
+
+	function plex(card, name) {
+		const d = card.data || {};
+		const streams = d.streams || [];
+		const sub = streams.length
+			? [plural(streams.length, 'stream'), d.transcodes ? `${d.transcodes} transcoding` : null, d.bandwidth ? mbps(d.bandwidth) : null].filter(Boolean).join(' · ')
+			: 'Nobody watching';
+		const badge = card.data
+			? h('span', { class: ['badge', !streams.length && 'badge--quiet'], 'aria-label': plural(streams.length, 'active stream') }, String(streams.length))
+			: null;
+		return shell(card, name, { sub, badge },
+			streams.length
+				? h('ul', { class: 'streams' }, streams.map((s) => plexStream(s, d.url)))
+				: h('p', { class: 'card__empty' }, 'Nothing playing on your server.'),
+			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open(d.url) } }, 'Open Plex')
 		);
 	}
 
@@ -576,7 +627,7 @@
 		);
 	}
 
-	const RENDERERS = { gmail: email, outlook: email, proton: email, spotify, strava, xbox, slack, clickup, tickets, weather, uptime, github, freeagent };
+	const RENDERERS = { gmail: email, outlook: email, proton: email, spotify, plex, strava, xbox, slack, clickup, tickets, weather, uptime, github, freeagent };
 
 	function render(card, providerName) {
 		const fn = RENDERERS[card.provider];
