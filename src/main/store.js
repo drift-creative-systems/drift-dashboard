@@ -221,6 +221,38 @@ function saveSettings(values) {
 	return cfg.settings;
 }
 
+/* ------------------------------------------------------------------ Layout */
+
+const SECTION_IDS = ['now'];          // Sections that can be rearranged.
+const HEIGHTS = ['normal', 'tall', 'compact'];
+
+function layout() {
+	return config().layout || {};
+}
+
+/**
+ * Save a section's card order and sizes, keeping only well-formed values:
+ * order = card IDs (account IDs or "upnext"), sizes = { id: { w: 1–3, h } }.
+ */
+function saveLayout(section, data) {
+	if (!SECTION_IDS.includes(section)) {
+		throw new Error('This section can’t be rearranged.');
+	}
+	const isId = (id) => typeof id === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(id);
+	const order = Array.isArray(data && data.order) ? [...new Set(data.order.filter(isId))] : [];
+	const sizes = {};
+	for (const [id, size] of Object.entries((data && data.sizes) || {})) {
+		const w = Number(size && size.w);
+		if (isId(id) && [1, 2, 3].includes(w) && HEIGHTS.includes(size.h)) {
+			sizes[id] = { w, h: size.h };
+		}
+	}
+	const cfg = config();
+	cfg.layout = { ...(cfg.layout || {}), [section]: { order, sizes } };
+	saveConfig();
+	return cfg.layout;
+}
+
 function windowState() {
 	return config().window;
 }
@@ -254,6 +286,8 @@ module.exports = {
 	secretKeys,
 	settings,
 	saveSettings,
+	layout,
+	saveLayout,
 	windowState,
 	saveWindowState,
 	dataDir: dir,

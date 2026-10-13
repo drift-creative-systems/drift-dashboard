@@ -67,6 +67,7 @@ function state() {
 		providers: providers.describe(),
 		accounts: accountsForRenderer(),
 		settings: store.settings(),
+		layout: store.layout(),
 		cards: scheduler.all(),
 	};
 }
@@ -256,6 +257,8 @@ function registerIpc() {
 		return state();
 	});
 
+	ipcMain.handle('layout:save', (_e, section, data) => store.saveLayout(section, data));
+
 	ipcMain.handle('link:open', (_e, url) => openExternal(url));
 }
 
@@ -274,6 +277,14 @@ function devScreenshot() {
 			if (process.argv.includes('--show-settings')) {
 				await win.webContents.executeJavaScript("document.getElementById('toggle-settings').click()");
 				await new Promise((r) => setTimeout(r, 500));
+			}
+			// `--exec=file.js` runs a script in the window first (UI tests); its result is printed.
+			const exec = process.argv.find((a) => a.startsWith('--exec='));
+			if (exec) {
+				const code = require('fs').readFileSync(path.resolve(exec.slice('--exec='.length)), 'utf8');
+				const result = await win.webContents.executeJavaScript(code);
+				console.log('[dev] exec result:', JSON.stringify(result));
+				await new Promise((r) => setTimeout(r, 400));
 			}
 			const scroll = process.argv.find((a) => a.startsWith('--scroll='));
 			if (scroll) {

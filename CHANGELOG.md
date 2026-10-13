@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] - 2026-10-13
+
+### Added
+- "Right now" cards can be rearranged and resized. Hover a card for its tools (bottom right): drag the grip (⠿) to move it, or focus the grip and use the arrow keys; ⇔ cycles the width through 1, 2 and 3 columns; the height button cycles normal, tall (Up next shows up to 12 events) and compact (scrolls, Up next shows 3). Moves and resizes are announced to screen readers.
+- Layout is saved to `config.json` (`layout.now`: order and sizes), validated in the main process. New accounts are added at the end.
+
+### Changed
+- Up next no longer has a fixed double width; it defaults to 2 columns and can be changed like any other card.
+
 ## [1.0.0] - 2026-10-13
 
 ### Added

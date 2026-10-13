@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('dashboard', {
 	connect: (id) => ipcRenderer.invoke('account:connect', id),
 	refresh: (id) => ipcRenderer.invoke('cards:refresh', id),
 	saveSettings: (values) => ipcRenderer.invoke('settings:save', values),
+	saveLayout: (section, data) => ipcRenderer.invoke('layout:save', section, data),
 	openLink: (url) => ipcRenderer.invoke('link:open', url),
 	onCard: (callback) => {
 		ipcRenderer.on('card:update', (_event, card) => callback(card));

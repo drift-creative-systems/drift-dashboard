@@ -262,6 +262,113 @@ select {
 
 .grid--now {
 	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	grid-auto-flow: row; /* Not dense: cards stay in the order you put them. */
+	container-type: inline-size;
+}
+
+/* ---------------------------------------------------- Rearrangeable slots */
+
+.slot {
+	position: relative;
+	min-width: 0;
+	display: grid;
+}
+
+.slot.w-2 {
+	grid-column: span 2;
+}
+
+.slot.w-3 {
+	grid-column: span 3;
+}
+
+/* Fewer columns fit in a narrow window: shrink wide cards rather than overflow.
+   3 columns need 3 × 280px + 2 gaps; 2 columns need 2 × 280px + 1 gap. */
+@container (max-width: 871px) {
+	.slot.w-3 {
+		grid-column: span 2;
+	}
+}
+
+@container (max-width: 575px) {
+	.slot.w-2,
+	.slot.w-3 {
+		grid-column: auto;
+	}
+}
+
+.slot.h-tall > .card {
+	min-height: 460px;
+	align-content: start; /* Keep content at the top; don't spread it out. */
+}
+
+.slot.h-compact > .card {
+	max-height: 230px;
+	overflow-y: auto;
+}
+
+.slot.is-dragging {
+	opacity: 0.4;
+}
+
+.slot__tools {
+	position: absolute;
+	right: 10px;
+	bottom: 10px;
+	display: flex;
+	gap: 4px;
+	padding: 3px;
+	border-radius: 999px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	opacity: 0;
+	transition: opacity 0.15s;
+}
+
+.slot:hover .slot__tools,
+.slot:focus-within .slot__tools {
+	opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.slot__tools {
+		transition: none;
+	}
+}
+
+.slot__btn {
+	border: 0;
+	background: var(--surface-2);
+	color: var(--text);
+	border-radius: 999px;
+	min-width: 28px;
+	height: 24px;
+	padding: 0 8px;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.slot__btn:hover {
+	background: var(--accent);
+	color: #fff;
+}
+
+.slot__grip {
+	cursor: grab;
+	font-size: 14px;
+}
+
+.slot__grip:active {
+	cursor: grabbing;
+}
+
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
 }
 
 .card--wide {

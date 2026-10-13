@@ -302,6 +302,18 @@ It shows the temperature now, what it feels like, wind, today's high and low and
 
 ---
 
+## Arranging the "Right now" cards
+
+Hover a card in **Right now** to show its tools in the bottom-right corner:
+
+- **⠿** drag to move the card. Or click it (or Tab to it) and use the arrow keys to move it one place at a time.
+- **⇔ 1/2/3** changes the width: 1, 2 or 3 columns. In a narrow window wide cards shrink to fit.
+- **↕** changes the height: normal → tall → compact. Tall Up next shows up to 12 events; compact shows 3 and other cards scroll.
+
+Your layout is saved straight away and kept between restarts. New cards go at the end.
+
+---
+
 ## Where your data lives
 
 - **Settings and accounts:** `%APPDATA%\Bonsai Dashboard\config.json` (no passwords in it).

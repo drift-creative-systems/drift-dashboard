@@ -32,9 +32,13 @@
 		return state.accounts.filter((a) => 'ics' === a.provider || ('outlook' === a.provider && a.config.show_calendar !== false));
 	}
 
+	/** Events listed under the headline, by the Up next card's height setting. */
+	const UPNEXT_ROWS = { compact: 3, normal: 5, tall: 12 };
+
 	function renderUpNext() {
 		const accounts = calendarAccounts();
-		return accounts.length ? upNext(accounts.map(card), accounts) : null;
+		const { h: height } = window.BD.layout.sizeOf('now', 'upnext', 2);
+		return accounts.length ? upNext(accounts.map(card), accounts, { rows: UPNEXT_ROWS[height] || 5 }) : null;
 	}
 
 	/**
@@ -75,12 +79,13 @@
 		const sections = [];
 		for (const section of SECTIONS) {
 			const accounts = state.accounts.filter((a) => (META[a.provider] || {}).section === section.id);
-			const items = [];
+			let items = [];
+			const entries = []; // For rearrangeable sections: { id, node, title, defaultW }.
 
 			if ('now' === section.id) {
 				upNextNode = renderUpNext();
 				if (upNextNode) {
-					items.push(upNextNode);
+					entries.push({ id: 'upnext', node: upNextNode, title: 'Up next', defaultW: 2 });
 				}
 			}
 			for (const account of accounts) {
@@ -88,7 +93,12 @@
 				if (node) {
 					nodes.set(account.id, node);
 					items.push(node);
+					entries.push({ id: account.id, node, title: account.label || providerName(account.provider) });
 				}
+			}
+			// "Right now" cards can be dragged and resized.
+			if ('now' === section.id) {
+				items = window.BD.layout.slots('now', entries);
 			}
 			if (!items.length) {
 				continue;
@@ -228,6 +238,21 @@
 		document.getElementById('settings-title').setAttribute('tabindex', '-1');
 
 		window.BD.settings.init({ getState: () => state, setState });
+		window.BD.layout.init({
+			getLayout: () => state.layout,
+			setLayout: (section, data) => {
+				state.layout = { ...(state.layout || {}), [section]: data };
+				window.dashboard.saveLayout(section, data).catch((err) => console.error('Couldn’t save the layout:', err));
+			},
+			// Up next lists more or fewer events depending on its height.
+			onResize: (id) => {
+				if ('upnext' === id && upNextNode) {
+					const fresh = renderUpNext();
+					swap(upNextNode, fresh);
+					upNextNode = fresh;
+				}
+			},
+		});
 		renderDashboard();
 
 		window.dashboard.onCard(updateCard);

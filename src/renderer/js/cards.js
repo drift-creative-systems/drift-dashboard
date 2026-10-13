@@ -303,7 +303,7 @@
 	 * Calendar accounts (iCal links) don't get their own card; their events
 	 * are merged with Outlook calendars into one Up next card.
 	 */
-	function upNext(cards, accounts) {
+	function upNext(cards, accounts, { rows: maxRows = 5 } = {}) {
 		const calCards = cards.filter((c) => 'ics' === c.provider || ('outlook' === c.provider && c.data && c.data.events));
 		const colour = new Map(accounts.filter((a) => 'ics' === a.provider || 'outlook' === a.provider)
 			.map((a, i) => [a.id, a.config.icon_color || CAL_COLOURS[i % CAL_COLOURS.length]]));
@@ -319,13 +319,13 @@
 		const upcoming = events.filter((e) => new Date(e.end || e.start).getTime() > now);
 		// Prefer a timed event as the headline over an all-day one.
 		const next = upcoming.find((e) => !e.allDay) || upcoming[0];
-		const rest = upcoming.filter((e) => e !== next).slice(0, 5);
+		const rest = upcoming.filter((e) => e !== next).slice(0, maxRows);
 		const errors = calCards.filter((c) => 'error' === c.status);
 		const loading = calCards.some((c) => 'loading' === c.status);
 
 		const dot = (e) => h('span', { class: 'cal-dot', style: e.colour ? { '--dot': e.colour } : null, 'aria-hidden': 'true' });
 
-		return h('article', { class: ['card', 'card--calendar', 'card--wide', errors.length && 'is-error'], 'aria-labelledby': 'card-upnext' },
+		return h('article', { class: ['card', 'card--calendar', errors.length && 'is-error'], 'aria-labelledby': 'card-upnext' },
 			h('header', { class: 'card__head' },
 				icon('ics'),
 				h('div', { class: 'card__titles' },
