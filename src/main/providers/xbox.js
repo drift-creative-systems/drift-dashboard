@@ -7,6 +7,11 @@ const { request } = require('../http');
 const API = 'https://xbl.io/api/v2';
 const SERVICE = 'OpenXBL';
 
+/** Box art over https only (some come back as http://, which the window blocks). */
+function https(url) {
+	return url ? String(url).replace(/^http:\/\//i, 'https://') : null;
+}
+
 module.exports = {
 	id: 'xbox',
 	name: 'Xbox',
@@ -23,15 +28,22 @@ module.exports = {
 		if (!key) {
 			throw new Error('Add the OpenXBL API key in Settings.');
 		}
-		const { data } = await request(`${API}/player/titleHistory`, {
+		// Same endpoint as the Drift Xbox tracker: player/titleHistory came back
+		// empty for some accounts, while achievements lists every game played.
+		const { data } = await request(`${API}/achievements`, {
 			headers: { 'X-Authorization': key, 'Accept-Language': 'en-GB' },
 			service: SERVICE,
 		});
 
-		const games = ((data && data.titles) || [])
+		const list = (data && (data.titles || (data.content && data.content.titles))) || [];
+		const playedAt = (t) => {
+			const time = new Date((t.titleHistory && t.titleHistory.lastTimePlayed) || '').getTime();
+			return Number.isNaN(time) ? 0 : time;
+		};
+		const games = list
 			.filter((t) => !t.type || 'Game' === t.type)
-			.filter((t) => t.titleHistory && t.titleHistory.lastTimePlayed)
-			.sort((a, b) => b.titleHistory.lastTimePlayed.localeCompare(a.titleHistory.lastTimePlayed));
+			.filter((t) => playedAt(t) > 0)
+			.sort((a, b) => playedAt(b) - playedAt(a));
 
 		const last = games[0];
 		if (!last) {
@@ -41,13 +53,13 @@ module.exports = {
 		return {
 			game: {
 				name: last.name,
-				image: last.displayImage || null,
-				playedAt: last.titleHistory.lastTimePlayed,
+				image: https(last.displayImage),
+				playedAt: new Date(playedAt(last)).toISOString(),
 				gamerscore: ach.currentGamerscore || 0,
 				totalGamerscore: ach.totalGamerscore || 0,
 				progress: ach.progressPercentage || 0,
 			},
-			recent: games.slice(1, 4).map((g) => ({ name: g.name, playedAt: g.titleHistory.lastTimePlayed })),
+			recent: games.slice(1, 4).map((g) => ({ name: g.name, playedAt: new Date(playedAt(g)).toISOString() })),
 		};
 	},
 };

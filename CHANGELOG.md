@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.4.1] - 2026-10-14
+
+### Fixed
+- Xbox card showed no games for some accounts. It now reads OpenXBL's `achievements` endpoint (the one the Drift Xbox tracker uses) instead of `player/titleHistory`, accepts the list as `titles` or `content.titles`, sorts by parsed date, and upgrades `http://` box art to `https://` so the window doesn't block it.
+
 ## [1.4.0] - 2026-10-13
 
 ### Added
