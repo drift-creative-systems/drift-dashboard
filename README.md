@@ -7,7 +7,7 @@ A Windows desktop app that shows everything at a glance, so you don't have to op
 | **Up next** | Next events across all your Google, Outlook and Proton calendars, merged |
 | **Spotify** | What's playing now (or the last track) |
 | **Plex** | Who's streaming from your Plex server right now and what they're watching |
-| **Claude Code usage** | Tokens and estimated cost for the current 5-hour block, today, this week and this month, by model and project |
+| **Claude plan usage** | How much of your Pro/Max session and weekly limits you've used, and when they reset |
 | **Strava** | This week's run time, walk time and gym sessions (from Monday) |
 | **Xbox** | Last game played |
 | **Email** | One card per inbox (Gmail, Outlook, Proton): unread count + latest 3 emails |
@@ -229,21 +229,24 @@ Plain `http://` is only accepted for local addresses (192.168.x.x, 10.x.x.x, 172
 
 The token is your Plex account's sign-in token, so treat it like a password. It's stored encrypted like the other keys. If you sign out of all devices in Plex, the token changes and the card asks for a new one.
 
-### Claude Code usage
+### Claude plan usage
 
-Nothing to sign in to. The card reads the session logs Claude Code keeps on this PC (`%USERPROFILE%\.claude\projects`), so it only works on a PC where you use Claude Code.
+Nothing to set up beyond Claude Code itself. The card shows the same figures as Claude Code's `/usage`: how much of your Pro or Max plan's limits you've used.
 
-1. In the dashboard: **Type: Claude Code usage**. Leave **Claude settings folder** blank unless you've moved it (or set `CLAUDE_CONFIG_DIR`, which the card also respects). **Save**.
+1. Make sure you're signed in to Claude Code on this PC with your Claude account (run `claude`, then `/login` if needed).
+2. In the dashboard: **Type: Claude plan usage**. Leave **Claude settings folder** blank unless you've moved it (or set `CLAUDE_CONFIG_DIR`, which the card also respects). **Save**.
 
-The card checks every minute and shows:
+The card checks every 5 minutes and shows:
 
-- **5-hour block**: what you've used since the current block started, when it resets, and a bar showing how far through the 5 hours you are. A block starts on the hour of your first message and lasts 5 hours, the same way the `ccusage` tool counts it.
-- **Today, this week (from Monday) and this month**: estimated cost and tokens.
-- **Today by model** (when you've used more than one) and the **three busiest projects** today, named after the folder Claude Code ran in.
+- **Current session**: % of the 5-hour limit used, with the reset time and how long until then.
+- **Weekly · all models**: % of the weekly limit used and when it resets. Any other limits Claude reports (e.g. a separate Opus weekly limit) appear the same way.
+- Bars turn amber from 75% and red from 90% (or when Claude flags the limit).
+- **Extra usage**: credits used once you've hit a limit, if you've switched that on.
+- **This week by app**: how this week's usage splits between Claude Code, chats, Cowork and so on.
 
-The cost is an estimate at Anthropic's API list prices (e.g. Opus 5.5 at $4 / $20 per million input / output tokens, with cache writes and reads priced separately). On a Pro or Max plan you don't pay this; it's a guide to how hard you're using it. Token totals include cached tokens, which is why they look large. The card can't see claude.ai chats, Claude Code on other machines, or your plan's remaining allowance: **Plan limits on claude.ai** opens the page that shows that.
+How it works: the card reads the sign-in Claude Code saves in `%USERPROFILE%\.claude\.credentials.json` and asks Claude's usage service, the same one `/usage` uses. The token stays in the app's background process and never reaches the window. The card never renews the sign-in itself, because that would sign Claude Code out. If it's expired (when Claude Code hasn't been used for a few hours), the card asks you to open Claude Code, and picks up the renewed sign-in on its next check.
 
-The first check reads up to a month of logs and can take a few seconds; after that it only reads what's new.
+That usage service isn't publicly documented, so Anthropic could change it. If the card shows "the dashboard needs an update", that's what happened.
 
 ### Strava
 
