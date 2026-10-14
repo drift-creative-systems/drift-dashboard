@@ -7,6 +7,7 @@ A Windows desktop app that shows everything at a glance, so you don't have to op
 | **Up next** | Next events across all your Google, Outlook and Proton calendars, merged |
 | **Spotify** | What's playing now (or the last track) |
 | **Plex** | Who's streaming from your Plex server right now and what they're watching |
+| **Claude Code usage** | Tokens and estimated cost for the current 5-hour block, today, this week and this month, by model and project |
 | **Strava** | This week's run time, walk time and gym sessions (from Monday) |
 | **Xbox** | Last game played |
 | **Email** | One card per inbox (Gmail, Outlook, Proton): unread count + latest 3 emails |
@@ -227,6 +228,22 @@ The card checks every 30 seconds and shows one row per stream: who's watching, t
 Plain `http://` is only accepted for local addresses (192.168.x.x, 10.x.x.x, 172.16–31.x.x, localhost, `.local`); anything else must be `https://`. Posters are fetched by the app and passed to the card as images, so the token never leaves the main process.
 
 The token is your Plex account's sign-in token, so treat it like a password. It's stored encrypted like the other keys. If you sign out of all devices in Plex, the token changes and the card asks for a new one.
+
+### Claude Code usage
+
+Nothing to sign in to. The card reads the session logs Claude Code keeps on this PC (`%USERPROFILE%\.claude\projects`), so it only works on a PC where you use Claude Code.
+
+1. In the dashboard: **Type: Claude Code usage**. Leave **Claude settings folder** blank unless you've moved it (or set `CLAUDE_CONFIG_DIR`, which the card also respects). **Save**.
+
+The card checks every minute and shows:
+
+- **5-hour block**: what you've used since the current block started, when it resets, and a bar showing how far through the 5 hours you are. A block starts on the hour of your first message and lasts 5 hours, the same way the `ccusage` tool counts it.
+- **Today, this week (from Monday) and this month**: estimated cost and tokens.
+- **Today by model** (when you've used more than one) and the **three busiest projects** today, named after the folder Claude Code ran in.
+
+The cost is an estimate at Anthropic's API list prices (e.g. Opus 5.5 at $4 / $20 per million input / output tokens, with cache writes and reads priced separately). On a Pro or Max plan you don't pay this; it's a guide to how hard you're using it. Token totals include cached tokens, which is why they look large. The card can't see claude.ai chats, Claude Code on other machines, or your plan's remaining allowance: **Plan limits on claude.ai** opens the page that shows that.
+
+The first check reads up to a month of logs and can take a few seconds; after that it only reads what's new.
 
 ### Strava
 

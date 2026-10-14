@@ -13,6 +13,7 @@ const accounts = [
 	{ id: 'demo-ics-2', provider: 'ics', label: 'Personal', config: { icon: '🏠', icon_color: '#3fb97a' } },
 	{ id: 'demo-spotify', provider: 'spotify', label: '', config: {} },
 	{ id: 'demo-plex', provider: 'plex', label: '', config: {} },
+	{ id: 'demo-claude', provider: 'claude', label: '', config: {} },
 	{ id: 'demo-strava', provider: 'strava', label: '', config: {} },
 	{ id: 'demo-xbox', provider: 'xbox', label: '', config: {} },
 	{ id: 'demo-gmail-1', provider: 'gmail', label: 'Gak Design', config: {} },
@@ -80,6 +81,18 @@ function data(account) {
 					{ kind: 'episode', title: 'Slow Horses', sub: 'S04E03 · Hello Goodbye', user: 'Ben', device: 'Living Room TV', state: 'playing', remote: false, transcoding: false, resolution: '1080', bandwidth: 10200, duration: 52 * MIN, offset: 31 * MIN, image: null },
 					{ kind: 'movie', title: 'The Holdovers', sub: '2023', user: 'Lex', device: 'iPad', state: 'paused', remote: true, transcoding: true, resolution: '720', bandwidth: 4400, duration: 133 * MIN, offset: 22 * MIN, image: null },
 				],
+			};
+		case 'demo-claude':
+			return {
+				block: { start: iso(-2 * HOUR - 20 * MIN), end: iso(2 * HOUR + 40 * MIN), cost: 18.42, tokens: 41200000, replies: 186 },
+				lastUsed: iso(-3 * MIN),
+				today: { cost: 27.9, tokens: 63400000, replies: 291 },
+				week: { cost: 96.35, tokens: 228000000, replies: 1040 },
+				month: { cost: 312.8, tokens: 741000000, replies: 3620 },
+				models: [{ name: 'Opus 5.5', cost: 24.1, tokens: 51800000, replies: 210 }, { name: 'Sonnet 5', cost: 3.8, tokens: 11600000, replies: 81 }],
+				projects: [{ name: 'vision_base_theme', cost: 19.6, tokens: 44100000, replies: 198 }, { name: 'bonsai-desktop-dashboard', cost: 6.2, tokens: 14300000, replies: 71 }, { name: 'bonsai-post-expiry', cost: 2.1, tokens: 5000000, replies: 22 }],
+				unpriced: false,
+				url: 'https://claude.ai/settings/usage',
 			};
 		case 'demo-strava':
 			return { weekStart: iso(-2 * 24 * HOUR), totals: {
