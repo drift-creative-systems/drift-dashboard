@@ -929,18 +929,50 @@ select {
 	color: var(--muted);
 }
 
-/* Claude Code usage. */
-.usage-block {
+/* Claude plan usage. */
+.limits {
+	list-style: none;
+	margin: 0;
+	padding: 0;
 	display: grid;
-	gap: 6px;
+	gap: 12px;
 }
 
-.usage-block__now {
+.limit {
+	display: grid;
+	gap: 4px;
+}
+
+.limit__top {
 	display: flex;
-	flex-wrap: wrap;
+	justify-content: space-between;
 	align-items: baseline;
-	gap: 4px 10px;
-	margin: 0;
+	gap: 8px;
+}
+
+.limit__name {
+	font-weight: 600;
+}
+
+.limit__pct {
+	font: 700 18px/1.1 var(--font-display);
+	font-variant-numeric: tabular-nums;
+}
+
+.limit__pct.is-warning {
+	color: var(--warn);
+}
+
+.limit__pct.is-error {
+	color: var(--error);
+}
+
+.progress__bar.is-warning {
+	background: var(--warn);
+}
+
+.progress__bar.is-error {
+	background: var(--error);
 }
 
 .usage-list {
@@ -971,7 +1003,7 @@ select {
 	white-space: nowrap;
 }
 
-/* Stats (Strava, tickets, Claude). */
+/* Stats (Strava, tickets). */
 .stats {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);

@@ -84,14 +84,13 @@ function data(account) {
 			};
 		case 'demo-claude':
 			return {
-				block: { start: iso(-2 * HOUR - 20 * MIN), end: iso(2 * HOUR + 40 * MIN), cost: 18.42, tokens: 41200000, replies: 186 },
-				lastUsed: iso(-3 * MIN),
-				today: { cost: 27.9, tokens: 63400000, replies: 291 },
-				week: { cost: 96.35, tokens: 228000000, replies: 1040 },
-				month: { cost: 312.8, tokens: 741000000, replies: 3620 },
-				models: [{ name: 'Opus 5.5', cost: 24.1, tokens: 51800000, replies: 210 }, { name: 'Sonnet 5', cost: 3.8, tokens: 11600000, replies: 81 }],
-				projects: [{ name: 'vision_base_theme', cost: 19.6, tokens: 44100000, replies: 198 }, { name: 'bonsai-desktop-dashboard', cost: 6.2, tokens: 14300000, replies: 71 }, { name: 'bonsai-post-expiry', cost: 2.1, tokens: 5000000, replies: 22 }],
-				unpriced: false,
+				plan: 'pro',
+				limits: [
+					{ name: 'Current session', percent: 64, resetsAt: iso(2 * HOUR + 40 * MIN), severity: 'normal' },
+					{ name: 'Weekly · all models', percent: 81, resetsAt: iso(4 * 24 * HOUR), severity: 'warning' },
+				],
+				extra: { used: 22.61, limit: null, percent: 0, currency: 'GBP' },
+				apps: [{ name: 'Claude Code', percent: 95 }, { name: 'Cowork', percent: 4 }, { name: 'Chats', percent: 1 }],
 				url: 'https://claude.ai/settings/usage',
 			};
 		case 'demo-strava':

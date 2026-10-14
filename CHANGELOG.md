@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.0] - 2026-10-14
+
+### Changed
+- The Claude card now shows your Claude plan's real limits instead of estimates from local logs: % of the current session (5-hour) and weekly limits used, reset times, extra usage credits used, and this week's split by app (Claude Code, chats, Cowork). Same figures as Claude Code's `/usage`. Renamed "Claude plan usage".
+- It reads Claude Code's sign-in from `~/.claude/.credentials.json` (or `CLAUDE_CONFIG_DIR`, or the folder in Settings) and calls the usage endpoint Claude Code uses, every 5 minutes. The token stays in the main process and is never refreshed by the dashboard; an expired sign-in shows a prompt to open Claude Code.
+- Bars turn amber from 75% and red from 90%, or when Claude flags the limit.
+
+### Removed
+- The estimated API cost, token counts, 5-hour block worked out from local logs, and today/week/month, model and project totals. The cost meant nothing on a Pro plan and the block times didn't match Claude's.
+
 ## [1.5.0] - 2026-10-14
 
 ### Added

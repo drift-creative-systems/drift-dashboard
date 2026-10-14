@@ -238,64 +238,54 @@
 		);
 	}
 
-	/* ----------------------------------------------------- Claude Code usage */
+	/* ----------------------------------------------------- Claude plan usage */
 
-	/** 173221468 → "173.2M". */
-	function tokens(n) {
-		if (n >= 1e9) {
-			return `${(n / 1e9).toFixed(1)}B`;
+	/** "Resets 21:29 (in 4h 58m)" today, "Resets Sat 22:59" later on. */
+	function resets(iso) {
+		if (!iso) {
+			return '';
 		}
-		if (n >= 1e6) {
-			return `${(n / 1e6).toFixed(1)}M`;
+		const at = new Date(iso);
+		const time = at.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+		const left = (at - Date.now()) / 1000;
+		if (at.toDateString() === new Date().toDateString()) {
+			return left > 0 ? `Resets ${time} (in ${duration(left)})` : `Resets ${time}`;
 		}
-		return n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(n || 0);
+		return `Resets ${at.toLocaleDateString('en-GB', { weekday: 'short' })} ${time}`;
 	}
 
-	/** Estimated cost in US$ (API list prices). */
-	function usd(n) {
-		return `$${(n || 0).toFixed(n >= 100 ? 0 : 2)}`;
+	function limitLevel(l) {
+		if ('critical' === l.severity || 'error' === l.severity || l.percent >= 90) {
+			return 'is-error';
+		}
+		return 'normal' !== l.severity || l.percent >= 75 ? 'is-warning' : null;
 	}
 
 	function claude(card, name) {
 		const d = card.data || {};
-		const b = d.block;
-		const stat = (label, t) => h('div', { class: 'stat' },
-			h('span', { class: 'stat__label' }, label),
-			h('span', { class: 'stat__value' }, usd(t && t.cost)),
-			h('span', { class: 'stat__sub' }, `${tokens(t && t.tokens)} tokens`)
-		);
-		const usage = (list) => h('ul', { class: 'usage-list' }, list.map((x) => h('li', null,
-			h('span', { class: 'usage-list__name' }, x.name),
-			h('span', { class: 'usage-list__value' }, `${usd(x.cost)} · ${tokens(x.tokens)}`)
-		)));
+		const plan = d.plan ? `${d.plan[0].toUpperCase()}${d.plan.slice(1)} plan` : '';
+		const money = (n, cur) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: cur || 'GBP' }).format(n || 0);
+		const x = d.extra;
 
-		let block;
-		if (b) {
-			const start = new Date(b.start).getTime();
-			const end = new Date(b.end).getTime();
-			const pct = Math.min(100, Math.max(0, Math.round(((Date.now() - start) / (end - start)) * 100)));
-			block = h('div', { class: 'usage-block' },
-				h('h4', { class: 'list-title' }, `5-hour block · resets ${shortTime(b.end)}`),
-				h('p', { class: 'usage-block__now' },
-					h('span', { class: 'stat__value' }, usd(b.cost)),
-					h('span', { class: 'muted small' }, `${tokens(b.tokens)} tokens · ${plural(b.replies, 'reply', 'replies')} · ${duration((end - Date.now()) / 1000)} left`)
-				),
-				h('div', { class: 'progress', role: 'progressbar', 'aria-label': 'Time through this 5-hour block', 'aria-valuenow': pct, 'aria-valuemin': 0, 'aria-valuemax': 100 },
-					h('div', { class: 'progress__bar', style: { '--value': `${pct}%` } }))
-			);
-		} else {
-			block = h('p', { class: 'card__empty' }, d.lastUsed ? `No active 5-hour block. Last used ${ago(d.lastUsed)}.` : 'No Claude Code activity this month.');
-		}
-
-		return shell(card, name, { sub: 'Claude Code on this PC · est. API value' },
-			block,
-			h('div', { class: 'stats' }, stat('Today', d.today), stat('This week', d.week), stat('This month', d.month)),
-			(d.models || []).length > 1 ? h('h4', { class: 'list-title' }, 'Today by model') : null,
-			(d.models || []).length > 1 ? usage(d.models) : null,
-			(d.projects || []).length ? h('h4', { class: 'list-title' }, 'Busiest projects today') : null,
-			(d.projects || []).length ? usage(d.projects) : null,
-			d.unpriced ? h('p', { class: 'muted small' }, 'Some models have no known price, so they count as $0.') : null,
-			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open(d.url) } }, 'Plan limits on claude.ai')
+		return shell(card, name, { sub: plan },
+			(d.limits || []).length
+				? h('ul', { class: 'limits' }, d.limits.map((l) => h('li', { class: 'limit' },
+					h('span', { class: 'limit__top' },
+						h('span', { class: 'limit__name' }, l.name),
+						h('span', { class: ['limit__pct', limitLevel(l)] }, `${l.percent}%`)
+					),
+					h('div', { class: 'progress', role: 'progressbar', 'aria-label': `${l.name} used`, 'aria-valuenow': l.percent, 'aria-valuemin': 0, 'aria-valuemax': 100 },
+						h('div', { class: ['progress__bar', limitLevel(l)], style: { '--value': `${Math.min(100, l.percent)}%` } })),
+					h('span', { class: 'row__sub' }, resets(l.resetsAt))
+				)))
+				: h('p', { class: 'card__empty' }, 'No plan limits reported.'),
+			x ? h('p', { class: 'muted small' }, `Extra usage: ${money(x.used, x.currency)} used${null !== x.limit ? ` of ${money(x.limit, x.currency)}` : ''}`) : null,
+			(d.apps || []).length ? h('h4', { class: 'list-title' }, 'This week by app') : null,
+			(d.apps || []).length ? h('ul', { class: 'usage-list' }, d.apps.map((a) => h('li', null,
+				h('span', { class: 'usage-list__name' }, a.name),
+				h('span', { class: 'usage-list__value' }, `${a.percent}%`)
+			))) : null,
+			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open(d.url) } }, 'Open usage on claude.ai')
 		);
 	}
 
