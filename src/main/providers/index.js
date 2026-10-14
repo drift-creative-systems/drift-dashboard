@@ -16,6 +16,7 @@ const providers = [
 	require('./freeagent'),
 	require('./spotify'),
 	require('./plex'),
+	require('./claude'),
 	require('./strava'),
 	require('./xbox'),
 	require('./weather'),

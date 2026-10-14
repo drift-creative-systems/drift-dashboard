@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.5.0] - 2026-10-14
+
+### Added
+- Claude Code usage card in "Right now": estimated cost and tokens for the current 5-hour block (with reset time, time left and a progress bar), today, this week (from Monday) and this month, plus today's split by model and the three busiest projects. Reads the session logs under `~/.claude/projects` (including subagent logs, `CLAUDE_CONFIG_DIR`, or a folder set in Settings); no sign-in.
+- Each reply is counted once (Claude Code repeats the usage on every content block), files untouched for 32 days are skipped, and each log is only read from where the last check stopped, so a refresh takes milliseconds after the first read.
+- Cost is estimated at API list prices per model, with 5-minute and 1-hour cache writes and cache reads priced separately. **Plan limits on claude.ai** opens the claude.ai usage page.
+- Claude logo from Simple Icons, and a demo card for `npm run demo`.
+
 ## [1.4.1] - 2026-10-14
 
 ### Fixed
