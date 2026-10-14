@@ -22,6 +22,7 @@ const WANTED = {
 	github: 'github',
 	spotify: 'spotify',
 	plex: 'plex',
+	claude: 'claude',
 	strava: 'strava',
 };
 

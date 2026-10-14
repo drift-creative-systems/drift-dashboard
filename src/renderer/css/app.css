@@ -929,7 +929,49 @@ select {
 	color: var(--muted);
 }
 
-/* Stats (Strava, tickets). */
+/* Claude Code usage. */
+.usage-block {
+	display: grid;
+	gap: 6px;
+}
+
+.usage-block__now {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 10px;
+	margin: 0;
+}
+
+.usage-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 4px;
+	font-size: 13px;
+}
+
+.usage-list li {
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+	min-width: 0;
+}
+
+.usage-list__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.usage-list__value {
+	color: var(--muted);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+/* Stats (Strava, tickets, Claude). */
 .stats {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);

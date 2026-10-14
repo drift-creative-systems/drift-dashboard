@@ -1,8 +1,8 @@
 {
   "name": "bonsai-desktop-dashboard",
   "productName": "Bonsai Dashboard",
-  "version": "1.4.1",
-  "description": "Everything at a glance: Spotify, Plex, email, calendars, Slack, ClickUp, Strava, Xbox and support tickets.",
+  "version": "1.5.0",
+  "description": "Everything at a glance: Spotify, Plex, Claude Code usage, email, calendars, Slack, ClickUp, Strava, Xbox and support tickets.",
   "author": "The Bonsai Digital Collective",
   "license": "UNLICENSED",
   "private": true,
