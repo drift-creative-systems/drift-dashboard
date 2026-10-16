@@ -13,7 +13,7 @@ const { request } = require('../http');
 
 const SERVICE = 'Claude';
 const API = 'https://api.anthropic.com/api/oauth/usage';
-const EXPIRED = 'Your Claude sign-in has expired. Open Claude Code (or run `claude`) and it will renew it; this card picks it up within 5 minutes.';
+const EXPIRED = 'Your Claude sign-in has expired. Open Claude Code (or run `claude`) and it will renew it; this card updates as soon as it does.';
 
 /** Names for the limit kinds Claude reports; anything new is tidied from its key. */
 const LIMIT_NAMES = {
@@ -117,6 +117,29 @@ module.exports = {
 	fields: [
 		{ key: 'folder', label: 'Claude settings folder', type: 'text', placeholder: '~/.claude' },
 	],
+
+	/**
+	 * Calls `changed` when Claude Code saves a new sign-in, so an expired card
+	 * recovers straight away instead of on its next check. Returns a stop function.
+	 */
+	watch(account, changed) {
+		const watchers = roots(account.config.folder).filter((dir) => fs.existsSync(dir)).flatMap((dir) => {
+			try {
+				const watcher = fs.watch(dir, (event, file) => {
+					// Some platforms don't report the name; treat that as a possible change.
+					if (!file || '.credentials.json' === String(file)) {
+						changed();
+					}
+				});
+				watcher.on('error', (err) => console.error('[claude] Stopped watching the sign-in:', err.message));
+				return [watcher];
+			} catch (err) {
+				console.error('[claude] Couldn\'t watch the sign-in:', err.message);
+				return [];
+			}
+		});
+		return () => watchers.forEach((w) => w.close());
+	},
 
 	async fetch(account) {
 		const oauth = signIn(account.config.folder);

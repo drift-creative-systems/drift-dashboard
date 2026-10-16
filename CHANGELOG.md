@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.1] - 2026-10-16
+
+### Fixed
+- The Claude card no longer waits up to 5 minutes (longer after repeated failures) to notice a renewed sign-in. It watches Claude Code's settings folder and retries within a couple of seconds of `.credentials.json` changing, but only while the card is showing an error. If the window is hidden, it catches up when you open it.
+
 ## [1.6.0] - 2026-10-14
 
 ### Changed

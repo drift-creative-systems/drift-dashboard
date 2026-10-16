@@ -244,7 +244,7 @@ The card checks every 5 minutes and shows:
 - **Extra usage**: credits used once you've hit a limit, if you've switched that on.
 - **This week by app**: how this week's usage splits between Claude Code, chats, Cowork and so on.
 
-How it works: the card reads the sign-in Claude Code saves in `%USERPROFILE%\.claude\.credentials.json` and asks Claude's usage service, the same one `/usage` uses. The token stays in the app's background process and never reaches the window. The card never renews the sign-in itself, because that would sign Claude Code out. If it's expired (when Claude Code hasn't been used for a few hours), the card asks you to open Claude Code, and picks up the renewed sign-in on its next check.
+How it works: the card reads the sign-in Claude Code saves in `%USERPROFILE%\.claude\.credentials.json` and asks Claude's usage service, the same one `/usage` uses. The token stays in the app's background process and never reaches the window. The card never renews the sign-in itself, because that would sign Claude Code out. If it's expired (when Claude Code hasn't been used for a few hours), the card asks you to open Claude Code, and updates within a few seconds of Claude Code renewing it.
 
 That usage service isn't publicly documented, so Anthropic could change it. If the card shows "the dashboard needs an update", that's what happened.
 
