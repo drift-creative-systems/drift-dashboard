@@ -7,6 +7,7 @@ const store = require('./store');
 const providers = require('./providers');
 
 const MAX_BACKOFF = 15 * 60 * 1000;
+const WATCH_SETTLE = 2000; // Files are often written in several steps.
 
 class Scheduler {
 	/**
@@ -21,7 +22,45 @@ class Scheduler {
 		this.running = new Set();
 		this.failures = new Map();
 		this.caches = new Map();
+		this.watchers = new Map(); // account id → stop function
+		this.settle = new Map();
+		this.due = new Set(); // Failing cards whose files changed while paused.
 		this.paused = false;
+	}
+
+	/**
+	 * Providers with a watch() hook (local files) retry a failing card as soon
+	 * as the file changes, rather than waiting for the next check.
+	 */
+	watch() {
+		this.watchers.forEach((stop) => stop());
+		this.watchers.clear();
+		if (this.fetcher) {
+			return;
+		}
+		store.accounts().forEach((account) => {
+			const provider = providers.get(account.provider);
+			if (!provider || !provider.watch) {
+				return;
+			}
+			this.watchers.set(account.id, provider.watch(account, () => {
+				clearTimeout(this.settle.get(account.id));
+				this.settle.set(account.id, setTimeout(() => this.changed(account.id), WATCH_SETTLE));
+			}));
+		});
+	}
+
+	changed(id) {
+		this.settle.delete(id);
+		const card = this.cards.get(id);
+		if (!card || 'error' !== card.status) {
+			return;
+		}
+		if (this.paused) {
+			this.due.add(id);
+			return;
+		}
+		this.refresh(id);
 	}
 
 	/**
@@ -135,9 +174,16 @@ class Scheduler {
 			const provider = providers.get(a.provider);
 			const card = this.cards.get(a.id);
 			const last = card && (card.failedAt || card.updatedAt);
-			const due = !force && provider && last ? new Date(last).getTime() + provider.interval - Date.now() : 0;
+			const due = !force && !this.due.has(a.id) && provider && last ? new Date(last).getTime() + provider.interval - Date.now() : 0;
+			if (this.due.delete(a.id)) {
+				this.failures.delete(a.id);
+			}
 			this.schedule(a.id, Math.max(i * 250, due));
 		});
+		if (force) {
+			// Accounts may have changed; resuming keeps the existing watchers.
+			this.watch();
+		}
 	}
 
 	refresh(id) {
