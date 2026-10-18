@@ -266,8 +266,17 @@
 		const plan = d.plan ? `${d.plan[0].toUpperCase()}${d.plan.slice(1)} plan` : '';
 		const money = (n, cur) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: cur || 'GBP' }).format(n || 0);
 		const x = d.extra;
+		// Clawd's mood follows the current session (5-hour) limit.
+		const session = (d.limits || []).find((l) => /session/i.test(l.name)) || (d.limits || [])[0];
+		const mascot = window.BD.clawd ? window.BD.clawd.mount(card.id, {
+			asleep: 'error' === card.status || !session,
+			percent: session ? session.percent : null,
+			resetsAt: session ? session.resetsAt : null,
+			critical: session ? 'is-error' === limitLevel(session) : false,
+		}) : null;
 
 		return shell(card, name, { sub: plan },
+			mascot,
 			(d.limits || []).length
 				? h('ul', { class: 'limits' }, d.limits.map((l) => h('li', { class: 'limit' },
 					h('span', { class: 'limit__top' },
