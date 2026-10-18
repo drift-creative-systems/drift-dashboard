@@ -243,6 +243,7 @@ The card checks every 5 minutes and shows:
 - Bars turn amber from 75% and red from 90% (or when Claude flags the limit).
 - **Extra usage**: credits used once you've hit a limit, if you've switched that on.
 - **This week by app**: how this week's usage splits between Claude Code, chats, Cowork and so on.
+- **Clawd**: the pixel crab from Claude Code's welcome screen, in a strip across the top of the card. His mood follows the current session: he wanders and follows your mouse, dozes if the card's been ignored for 10 minutes, sweats from 90%, lies belly-up at 100%, burrows into the sand while the card has an error, and celebrates when the session resets. Click him for a random Claude Code animation. With Windows' reduced motion on, he only moves when clicked. Ported from [clawd-usage-winwidget](https://github.com/Enhed/clawd-usage-winwidget) by Venger Sergey (MIT licence). Clawd and Claude are Anthropic's.
 
 How it works: the card reads the sign-in Claude Code saves in `%USERPROFILE%\.claude\.credentials.json` and asks Claude's usage service, the same one `/usage` uses. The token stays in the app's background process and never reaches the window. The card never renews the sign-in itself, because that would sign Claude Code out. If it's expired (when Claude Code hasn't been used for a few hours), the card asks you to open Claude Code, and updates within a few seconds of Claude Code renewing it.
 
@@ -432,6 +433,7 @@ src/main/            Electron main process (all network access + storage)
 src/renderer/        the window: plain HTML/CSS/JS, no framework
   js/util.js         DOM helper (text only, never HTML) + date formatting
   js/cards.js        one renderer per card type + Up next
+  js/clawd.js        Clawd, the pixel mascot on the Claude card
   js/settings.js     settings screen, forms built from provider fields
   js/app.js          layout and live card updates
 ```

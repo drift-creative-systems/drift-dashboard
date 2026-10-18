@@ -930,6 +930,40 @@ select {
 }
 
 /* Claude plan usage. */
+.clawd {
+	--clawd-body: #d97757;
+	--clawd-eyes: #000;
+	--clawd-sand: #a88d62;
+	--clawd-ground: var(--border);
+	--clawd-fx: var(--muted);
+	--clawd-sweat: #60a5fa;
+	--clawd-note: #93c5fd;
+	--clawd-heart: var(--pink);
+	--clawd-soul: #dbeafe;
+	display: block;
+	width: 100%;
+	height: 48px; /* STRIP_H in clawd.js. */
+	padding: 0;
+	border: 0;
+	border-radius: var(--radius-sm);
+	background: none;
+	cursor: pointer;
+}
+
+.clawd__canvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+@media (prefers-color-scheme: light) {
+	.clawd {
+		--clawd-sand: #c9ae80;
+		--clawd-note: #2563eb;
+		--clawd-soul: #7aa7d6;
+	}
+}
+
 .limits {
 	list-style: none;
 	margin: 0;
