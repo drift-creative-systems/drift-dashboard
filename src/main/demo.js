@@ -16,6 +16,7 @@ const accounts = [
 	{ id: 'demo-claude', provider: 'claude', label: '', config: {} },
 	{ id: 'demo-strava', provider: 'strava', label: '', config: {} },
 	{ id: 'demo-xbox', provider: 'xbox', label: '', config: {} },
+	{ id: 'demo-driftrecord', provider: 'driftrecord', label: '', config: {} },
 	{ id: 'demo-gmail-1', provider: 'gmail', label: 'Gak Design', config: {} },
 	{ id: 'demo-gmail-2', provider: 'gmail', label: 'Bonsai', config: { icon: 'B', icon_color: '#4f9dff' } },
 	{ id: 'demo-outlook', provider: 'outlook', label: 'Outlook', config: { show_calendar: true } },
@@ -101,6 +102,17 @@ function data(account) {
 			} };
 		case 'demo-xbox':
 			return { game: { name: 'Forza Horizon 5', image: null, playedAt: iso(-14 * HOUR), gamerscore: 640, totalGamerscore: 1000, progress: 64 }, recent: [{ name: 'Halo Infinite', playedAt: iso(-3 * 24 * HOUR) }] };
+		case 'demo-driftrecord':
+			return {
+				email: 'ben@gakdesign.co.uk', url: 'https://record.driftcreativesystems.co.uk/', upcomingCount: 5,
+				next: { id: 'd1', name: 'Massive Attack', date: isoDay(6), endDate: '', doors: '18:30', city: 'Bristol', venue: 'Bristol Beacon', type: 'gig', status: 'booked', train: { first: false, depart: '15:12', back: '23:40' }, hotel: 'Premier Inn Bristol City', cost: 146.5 },
+				later: [
+					{ id: 'd2', name: 'Idles', date: isoDay(19), endDate: '', doors: '19:00', city: 'Exeter', venue: 'Great Hall', type: 'gig', status: 'booked', train: null, hotel: '', cost: 38 },
+					{ id: 'd3', name: 'Bicep', date: isoDay(33), endDate: '', doors: '', city: 'London', venue: 'Alexandra Palace', type: 'gig', status: 'planned', train: null, hotel: '', cost: 0 },
+					{ id: 'd4', name: 'Boomtown', date: isoDay(61), endDate: isoDay(64), doors: '', city: 'Winchester', venue: '', type: 'festival', status: 'planned', train: null, hotel: '', cost: 0 },
+				],
+				year: { year: String(new Date().getFullYear()), count: 18, spend: 1240.35 },
+			};
 		case 'demo-gmail-1':
 			return mail('ben@gakdesign.co.uk', 4, [['Sarah at Realityhouse', 'Re: Launch date for the new site', 8 * MIN, true], ['Google Search Console', 'New coverage issue detected', 2 * HOUR, true], ['WP Engine', 'Your monthly usage report', 26 * HOUR, false]]);
 		case 'demo-gmail-2':

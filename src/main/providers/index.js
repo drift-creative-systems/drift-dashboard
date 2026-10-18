@@ -19,6 +19,7 @@ const providers = [
 	require('./claude'),
 	require('./strava'),
 	require('./xbox'),
+	require('./driftrecord'),
 	require('./weather'),
 ];
 

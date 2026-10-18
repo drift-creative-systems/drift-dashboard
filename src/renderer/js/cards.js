@@ -25,6 +25,7 @@
 		uptime: { icon: 'U', brand: '#2b9348', section: 'tickets' },
 		github: { icon: 'GH', brand: '#6e5494', section: 'github' },
 		freeagent: { icon: 'F', brand: '#0f8b8d', section: 'money' },
+		driftrecord: { icon: 'D', brand: '#8b5cf6', section: 'now' },
 	};
 
 	/** Colours for telling calendars apart in Up next. */
@@ -77,7 +78,7 @@
 		if (logo) {
 			// Built node by node (no innerHTML), from bundled CC0 paths.
 			const svg = document.createElementNS(SVG_NS, 'svg');
-			svg.setAttribute('viewBox', '0 0 24 24');
+			svg.setAttribute('viewBox', logo.viewBox || '0 0 24 24');
 			svg.setAttribute('class', 'card__logo');
 			const path = document.createElementNS(SVG_NS, 'path');
 			path.setAttribute('d', logo.path);
@@ -688,7 +689,87 @@
 		);
 	}
 
-	const RENDERERS = { gmail: email, outlook: email, proton: email, spotify, plex, claude, strava, xbox, slack, clickup, tickets, weather, uptime, github, freeagent };
+	/* -------------------------------------------------------- Drift: Record */
+
+	const DAY_MS = 86400000;
+	const gigDate = (day) => new Date(`${day}T00:00:00`);
+	const gigShort = (day) => gigDate(day).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+	const gigLong = (day) => gigDate(day).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+
+	/** Whole days from today to a YYYY-MM-DD date (0 = today). */
+	function daysUntil(day) {
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		return Math.round((gigDate(day) - today) / DAY_MS);
+	}
+
+	/** "Tonight", "Tomorrow", "Sat 25 Oct · in 7 days", "On now · until Sun 27 Oct". */
+	function gigWhen(e) {
+		const days = daysUntil(e.date);
+		if (days < 0) {
+			return `On now · until ${gigLong(e.endDate)}`;
+		}
+		if (0 === days) {
+			return e.endDate ? 'Starts today' : 'Tonight';
+		}
+		if (1 === days) {
+			return 'Tomorrow';
+		}
+		return `${gigLong(e.date)} · in ${plural(days, 'day')}`;
+	}
+
+	/** "25 Oct" or, for a festival, "24–26 Oct". */
+	function gigDates(e) {
+		if (!e.endDate || e.endDate === e.date) {
+			return gigShort(e.date);
+		}
+		const [from, to] = [gigDate(e.date), gigDate(e.endDate)];
+		return from.getMonth() === to.getMonth() ? `${from.getDate()}–${gigShort(e.endDate)}` : `${gigShort(e.date)} – ${gigShort(e.endDate)}`;
+	}
+
+	function gigPill(e) {
+		const booked = 'booked' === e.status;
+		return h('span', { class: ['pill', booked && 'pill--success'] }, booked ? 'Booked' : 'Planned');
+	}
+
+	function driftrecord(card, name) {
+		const d = card.data || {};
+		const n = d.next;
+		const y = d.year || {};
+		const train = n && n.train;
+		const details = n ? [
+			n.endDate ? gigDates(n) : null,
+			n.doors ? `Doors ${n.doors}` : null,
+			train ? `Train ${train.depart || '?'} → ${train.back || '?'}${train.first ? ' · First' : ''}` : null,
+			n.hotel ? `Hotel: ${n.hotel}` : null,
+			n.cost ? money(n.cost) : null,
+		].filter(Boolean).join(' · ') : '';
+		const badge = card.data
+			? h('span', { class: ['badge', !d.upcomingCount && 'badge--quiet'], 'aria-label': plural(d.upcomingCount || 0, 'upcoming event') }, String(d.upcomingCount || 0))
+			: null;
+
+		return shell(card, name, { sub: d.email, badge },
+			n
+				? h('button', { type: 'button', class: 'next', on: { click: () => open(d.url) }, 'aria-label': `Next: ${n.name}, ${gigWhen(n)}. Open Drift: Record` },
+					h('span', { class: 'next__when' }, gigWhen(n)),
+					h('span', { class: 'next__title' }, n.name),
+					h('span', { class: 'row__sub' }, gigPill(n), ' ', [n.venue, n.city].filter(Boolean).join(' · ')),
+					details ? h('span', { class: 'row__sub next__details' }, details) : null
+				)
+				: h('p', { class: 'card__empty' }, 'Nothing coming up. Add your next gig in Drift: Record.'),
+			(d.later || []).length ? rows(d.later.map((e) => row({
+				main: e.name,
+				sub: [e.venue, e.city].filter(Boolean).join(' · '),
+				time: gigDates(e),
+				url: d.url,
+				before: gigPill(e),
+			})), '') : null,
+			y.year ? h('p', { class: 'muted small' }, `${y.year} so far: ${plural(y.count || 0, 'event')} · ${money(y.spend)}`) : null,
+			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open(d.url) } }, 'Open Drift: Record')
+		);
+	}
+
+	const RENDERERS = { gmail: email, outlook: email, proton: email, spotify, plex, claude, strava, xbox, slack, clickup, tickets, weather, uptime, github, freeagent, driftrecord };
 
 	function render(card, providerName) {
 		const fn = RENDERERS[card.provider];
