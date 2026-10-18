@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.7.0] - 2026-10-18
+
+### Added
+- Clawd, the pixel crab from Claude Code's welcome screen, now lives in a strip across the Claude card. He wanders about, follows the mouse, and dozes after 10 minutes without it. He sweats from 90% of the session limit and lies belly-up at 100%, and he burrows into the sand while the card has an error. He celebrates with confetti when the session resets. Click him for a random Claude Code animation (jump, spin, wink, turn, coin hop and more). With reduced motion switched on in Windows, he stays still unless you click him.
+- Art and animations are ported from [clawd-usage-winwidget](https://github.com/Enhed/clawd-usage-winwidget) by Venger Sergey (MIT) and drawn on a canvas, with no new dependencies or network access.
+
 ## [1.6.1] - 2026-10-16
 
 ### Fixed
