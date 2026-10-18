@@ -1201,6 +1201,11 @@ select {
 	font: 600 17px/1.25 var(--font-display);
 }
 
+/* Drift: Record's doors / train / hotel line can be long, so it wraps. */
+.next__details {
+	white-space: normal;
+}
+
 .cal-dot {
 	display: inline-block;
 	width: 8px;

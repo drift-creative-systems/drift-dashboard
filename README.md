@@ -10,6 +10,7 @@ A Windows desktop app that shows everything at a glance, so you don't have to op
 | **Claude plan usage** | How much of your Pro/Max session and weekly limits you've used, and when they reset |
 | **Strava** | This week's run time, walk time and gym sessions (from Monday) |
 | **Xbox** | Last game played |
+| **Drift: Record** | The next gig or festival you're going to (countdown, venue, doors, train, hotel), the few after it, and this year's count and spend |
 | **Email** | One card per inbox (Gmail, Outlook, Proton): unread count + latest 3 emails |
 | **Slack** | One card per workspace: latest direct messages |
 | **ClickUp** | Due this week (incl. overdue) + recent activity on your tasks |
@@ -271,6 +272,22 @@ Microsoft has no official API for this, so it goes through **OpenXBL**, a free t
 3. In the dashboard: **Type: Xbox**, paste the key. **Save**.
 
 The free key allows about 150 requests an hour; the card checks every 10 minutes. Your Xbox privacy settings must allow your game history to be seen: on Xbox or at [account.xbox.com](https://account.xbox.com) → Privacy → "Others can see your game and app history" → Everyone or Friends.
+
+### Drift: Record
+
+Uses your normal Drift: Record app login. Nothing to deploy: the card reads the same API the Android app uses.
+
+1. In the dashboard: **Type: Drift: Record**, your Drift: Record **email** and **password**. **Save**.
+2. Leave **Drift: Record address** (under advanced) blank to use `record.driftcreativesystems.co.uk`. To point it at another install, enter that site's address or its API address (`…/wp-json/drift-record/v1/`).
+
+The card checks every 15 minutes and shows:
+
+- **Next event**: the soonest upcoming event marked *Planned* or *Booked*, with a countdown ("Sat 25 Oct · in 7 days", "Tomorrow", "Tonight"), venue and city, then doors, train times, hotel and total cost when you've filled them in. A festival you're at shows "On now · until …".
+- **The next 4 after it**, with dates and a Booked/Planned pill. The badge is how many upcoming events there are.
+- **This year so far**: number of events and total spend, the same figures as the app's dashboard.
+- Events marked *Attended* or *Didn't go* are left out of the upcoming list.
+
+How it works: the dashboard signs in once and keeps the token the plugin issues (it shows as a "Bonsai Dashboard" device and lasts 180 days from its last use). Your password is saved encrypted, like an email password, and is only used again if the token stops working, e.g. after a password reset. If you change your Drift: Record password, update it here too.
 
 ### Support tickets (support.bonsaidigitalcollective.co.uk and support.driftcreativesystems.co.uk)
 
