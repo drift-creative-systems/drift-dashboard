@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.8.0] - 2026-10-18
+
+### Added
+- Drift: Record card in "Right now": the next gig or festival you're going to (*Planned* or *Booked*), with a countdown, venue, city, doors, train times, hotel and total cost. Below it are the next 4 events with Booked/Planned pills, and this year's event count and spend, matching the app's dashboard. A festival you're at shows "On now · until …". Clicking opens the Drift: Record app.
+- Signs in to the Drift: Record plugin API (`/wp-json/drift-record/v1/`) with your app email and password, then reuses the 180-day token. It signs in again only if the token is rejected or you change the email or site, which keeps it well inside the plugin's login rate limit. The password and token are stored encrypted. The address defaults to record.driftcreativesystems.co.uk.
+- The Drift "D" mark as the card's logo. Logos in `scripts/make-logos.js` can now carry their own viewBox, for our own marks that aren't in Simple Icons.
+- Demo card for `npm run demo`.
+
 ## [1.7.0] - 2026-10-18
 
 ### Added
