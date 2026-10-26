@@ -250,6 +250,8 @@ How it works: the card reads the sign-in Claude Code saves in `%USERPROFILE%\.cl
 
 That usage service isn't publicly documented, so Anthropic could change it. If the card shows "the dashboard needs an update", that's what happened.
 
+**Connect Clawd to Claude Code (optional).** In Settings, the Claude card has a **Connect Clawd** button. It adds a few hooks to Claude Code's `settings.json` (after saving a copy as `settings.json.bonsai-backup`), and then Clawd shows what Claude Code is doing. He hunches over typing ("…") while it works, puts his arms up ("?") when it's waiting for you to approve something, and waves when it finishes. New Claude Code sessions pick up the hooks. Each hook just writes one word to `bonsai-dashboard-clawd` in the same folder, which the dashboard watches. If you run several sessions at once, the latest event wins, and anything older than 15 minutes is ignored. The plan-limit moods still come first, so at 100% he stays belly-up. **Disconnect Clawd** removes only the dashboard's hooks and leaves any of your own alone.
+
 ### Strava
 
 1. Go to [strava.com/settings/api](https://www.strava.com/settings/api) and create an app:
@@ -376,6 +378,20 @@ Your layout is saved straight away and kept between restarts. New cards go into 
 
 **Right now** always stays at the top. The sections below it (Email, Slack, ClickUp, Money, Support & uptime, GitHub) can go in any order: hover a section heading and either drag its **⠿** handle up or down, or use **▲ ▼**. The order is saved straight away.
 
+### Hiding cards
+
+Hover a card and click **✕** in its top-right corner to hide it. Hidden cards aren't checked at all and don't raise alerts, but the account and its settings are kept. To bring one back, go to Settings: it's marked **Hidden** in the account list, with a **Show** button. Every account there also has a **Hide** button.
+
+## Desktop alerts
+
+Windows notifications for things that need you, even with the dashboard closed to the tray:
+
+- **Uptime:** a site goes down or comes back up. If sites are already down when the app starts, you get one summary.
+- **Support tickets:** a ticket marked *Urgent* or *High* appears, or an existing ticket is raised to one of those. Tickets that are already there when the app starts don't alert.
+- **Claude:** a plan limit passes 90%, then 100%. Each threshold alerts once per limit window.
+
+Click a notification to open the dashboard. Switch each type on or off under Settings → General → **Desktop alerts**. By default they only appear when the dashboard isn't the window in front, since you'd see the card anyway. While the window is hidden, only the Uptime, Support tickets and Claude cards keep checking, at their usual 2–5 minutes. Everything else waits until you open it.
+
 ---
 
 ## Where your data lives
@@ -443,6 +459,9 @@ src/main/            Electron main process (all network access + storage)
   store.js           config.json + encrypted secrets.json
   updater.js         checks for, downloads and installs updates (installed app only)
   scheduler.js       polls each account, backoff on errors, pauses while hidden
+                     (except cards that alert)
+  alerts.js          desktop notifications: sites down, urgent tickets, Claude limits
+  clawdhooks.js      adds/removes Clawd's Claude Code hooks, watches their state file
   oauth.js           browser sign-in on a loopback port (PKCE)
   http.js            fetch wrapper: timeouts + readable errors
   demo.js            sample data for `npm run demo`

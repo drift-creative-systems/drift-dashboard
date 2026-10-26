@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.9.0] - 2026-10-26
+
+### Added
+- Desktop alerts (Windows notifications) when a site goes down or comes back up, when an urgent or high-priority support ticket appears, and when a Claude plan limit passes 90% or runs out. The Uptime, Support tickets and Claude cards keep checking while the dashboard is in the tray, so these arrive with the window closed. Each type can be switched off under Settings → General → Desktop alerts, and by default they only show when the dashboard isn't in front. Starting the app doesn't replay old tickets, and sites already down get one summary.
+- Hide a card: hover it and click ✕. Hidden cards aren't checked and don't alert. Show them again from Settings, where every account now has a Hide/Show button.
+- Clawd can now show what Claude Code is doing. **Connect Clawd** in Settings adds hooks to Claude Code's `settings.json` (backed up first), and then he types while Claude works, puts his arms up while it waits for your approval, and waves when it finishes. **Disconnect Clawd** removes only those hooks.
+
+### Changed
+- Starting with Windows (`--hidden`) now lets the alerting cards check in the background. Other cards still wait until the window opens.
+
 ## [1.8.0] - 2026-10-18
 
 ### Added
