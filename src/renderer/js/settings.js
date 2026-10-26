@@ -122,6 +122,22 @@
 								'aria-label': `${isHidden(a) ? 'Show' : 'Hide'} ${name} on the dashboard`,
 								on: { click: () => window.BD.hideCard(a.id, !isHidden(a)) },
 							}, isHidden(a) ? 'Show' : 'Hide'),
+							undefined !== a.clawdHooks ? h('button', {
+								type: 'button',
+								class: 'btn btn--small',
+								title: 'Lets Clawd show when Claude Code is working or waiting for you',
+								on: {
+									click: () => {
+										const on = !a.clawdHooks;
+										const ask = on
+											? 'Connect Clawd to Claude Code?\n\nThis adds a few hooks to Claude Code’s settings.json so Clawd can show when Claude is working or waiting for you. A backup (settings.json.bonsai-backup) is saved first. New Claude Code sessions pick it up.'
+											: 'Disconnect Clawd? This removes only the dashboard’s hooks from Claude Code’s settings.json.';
+										if (window.confirm(ask)) {
+											act(() => window.dashboard.setClawdHooks(a.id, on), rowStatus);
+										}
+									},
+								},
+							}, a.clawdHooks ? 'Disconnect Clawd' : 'Connect Clawd') : null,
 							h('button', { type: 'button', class: 'btn btn--small', on: { click: () => edit(a) } }, 'Edit'),
 							h('button', { type: 'button', class: 'btn btn--small', 'aria-label': `Move ${name} up`, on: { click: () => act(() => window.dashboard.moveAccount(a.id, 'up')) } }, '↑'),
 							h('button', { type: 'button', class: 'btn btn--small', 'aria-label': `Move ${name} down`, on: { click: () => act(() => window.dashboard.moveAccount(a.id, 'down')) } }, '↓'),

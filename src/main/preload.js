@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('dashboard', {
 	deleteAccount: (id) => ipcRenderer.invoke('account:delete', id),
 	moveAccount: (id, direction) => ipcRenderer.invoke('account:move', id, direction),
 	hideAccount: (id, hide) => ipcRenderer.invoke('account:hide', id, hide),
+	setClawdHooks: (id, on) => ipcRenderer.invoke('clawd:hooks', id, on),
 	connect: (id) => ipcRenderer.invoke('account:connect', id),
 	refresh: (id) => ipcRenderer.invoke('cards:refresh', id),
 	saveSettings: (values) => ipcRenderer.invoke('settings:save', values),
@@ -20,6 +21,9 @@ contextBridge.exposeInMainWorld('dashboard', {
 	installUpdate: () => ipcRenderer.invoke('update:install'),
 	onUpdate: (callback) => {
 		ipcRenderer.on('update:status', (_event, status) => callback(status));
+	},
+	onClawd: (callback) => {
+		ipcRenderer.on('clawd:activity', (_event, update) => callback(update));
 	},
 	onCard: (callback) => {
 		ipcRenderer.on('card:update', (_event, card) => callback(card));

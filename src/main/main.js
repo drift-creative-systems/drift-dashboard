@@ -12,6 +12,7 @@ const providers = require('./providers');
 const Scheduler = require('./scheduler');
 const updater = require('./updater');
 const alerts = require('./alerts');
+const clawdhooks = require('./clawdhooks');
 
 const ASSETS = path.join(__dirname, '..', '..', 'assets');
 const ALLOWED_PROTOCOLS = ['https:', 'slack:'];
@@ -28,6 +29,7 @@ let quitting = false;
 let scheduler = null;
 let watcher = null;
 const shown = new Set(); // Live notifications; dropped ones lose their click handler.
+const clawdWatchers = new Map(); // Claude account id → stop function
 
 /* ---------------------------------------------------------------- Helpers */
 
@@ -84,7 +86,49 @@ function accountsForRenderer() {
 		config: a.config,
 		savedSecrets: store.secretKeys(a.id),
 		connected: store.secretKeys(a.id).includes('refresh_token'),
+		clawdHooks: 'claude' === a.provider && !DEMO ? clawdhooks.installed(claudeRoot(a)) : undefined,
 	}));
+}
+
+function claudeRoot(account) {
+	return providers.get('claude').root(account.config.folder);
+}
+
+/** What Claude Code last told Clawd, per Claude card: { id: { state, at } }. */
+function clawdActivity() {
+	if (DEMO) {
+		return {};
+	}
+	return Object.fromEntries(store.accounts()
+		.filter((a) => 'claude' === a.provider)
+		.map((a) => [a.id, clawdhooks.read(claudeRoot(a))]));
+}
+
+/**
+ * Watch each Claude card's folder for Claude Code's hooks, and pass every
+ * change straight to the window (no need to wait for the next usage check).
+ */
+function watchClawd() {
+	clawdWatchers.forEach((stop) => stop());
+	clawdWatchers.clear();
+	if (DEMO) {
+		return;
+	}
+	for (const account of store.accounts().filter((a) => 'claude' === a.provider)) {
+		const dir = claudeRoot(account);
+		if (!require('fs').existsSync(dir)) {
+			continue;
+		}
+		let settle = null;
+		const stop = clawdhooks.watch(dir, () => {
+			clearTimeout(settle);
+			settle = setTimeout(() => send('clawd:activity', { id: account.id, activity: clawdhooks.read(dir) }), 100);
+		});
+		clawdWatchers.set(account.id, () => {
+			clearTimeout(settle);
+			stop();
+		});
+	}
 }
 
 function state() {
@@ -94,6 +138,7 @@ function state() {
 		accounts: accountsForRenderer(),
 		settings: store.settings(),
 		layout: store.layout(),
+		clawd: clawdActivity(),
 		update: updater.current(),
 		cards: scheduler.all(),
 	};
@@ -246,6 +291,7 @@ function registerIpc() {
 		scheduler.reset(account.id);
 		watcher.forget(account.id);
 		scheduler.start();
+		watchClawd();
 		return state();
 	});
 
@@ -254,6 +300,22 @@ function registerIpc() {
 		scheduler.reset(id);
 		watcher.forget(id);
 		scheduler.start();
+		watchClawd();
+		return state();
+	});
+
+	ipcMain.handle('clawd:hooks', (_e, id, on) => {
+		const account = store.account(id);
+		if (!account || 'claude' !== account.provider || DEMO) {
+			throw new Error('Only a Claude card can connect Clawd.');
+		}
+		const dir = claudeRoot(account);
+		if (on) {
+			clawdhooks.install(dir);
+		} else {
+			clawdhooks.remove(dir);
+		}
+		watchClawd();
 		return state();
 	});
 
@@ -379,6 +441,7 @@ if (!app.requestSingleInstanceLock()) {
 		createWindow(visible);
 		applyLoginItem();
 		scheduler.start();
+		watchClawd();
 		devScreenshot();
 		updater.init({
 			send: (status) => send('update:status', status),

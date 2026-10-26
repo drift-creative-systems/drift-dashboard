@@ -215,11 +215,18 @@
 		}
 	}
 
+	function clawdActivity() {
+		if (window.BD.clawd) {
+			Object.entries(state.clawd || {}).forEach(([id, value]) => window.BD.clawd.activity(id, value));
+		}
+	}
+
 	function setState(next) {
 		state = next;
 		for (const snapshot of next.cards) {
 			cards.set(snapshot.id, snapshot);
 		}
+		clawdActivity();
 		renderDashboard();
 		window.BD.settings.refresh();
 	}
@@ -287,9 +294,16 @@
 				window.dashboard.saveSectionOrder(order).catch((err) => console.error('Couldn’t save the section order:', err));
 			},
 		});
+		clawdActivity();
 		renderDashboard();
 
 		window.dashboard.onCard(updateCard);
+		window.dashboard.onClawd(({ id, activity }) => {
+			state.clawd = { ...(state.clawd || {}), [id]: activity };
+			if (window.BD.clawd) {
+				window.BD.clawd.activity(id, activity);
+			}
+		});
 		window.BD.update.init(state.update);
 
 		toggle.addEventListener('click', () => showSettings(settings.hidden));

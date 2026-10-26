@@ -36,6 +36,12 @@ function roots(custom) {
 	return env.length ? env : [path.join(os.homedir(), '.claude')];
 }
 
+/** The folder Claude Code uses: the first that exists. */
+function root(custom) {
+	const list = roots(custom);
+	return list.find((dir) => fs.existsSync(dir)) || list[0];
+}
+
 /**
  * Claude Code's sign-in: { accessToken, expiresAt, subscriptionType }.
  */
@@ -108,6 +114,7 @@ function extra(data) {
 }
 
 module.exports = {
+	root,
 	id: 'claude',
 	name: 'Claude plan usage',
 	section: 'now',
