@@ -5,12 +5,13 @@
  * The window (renderer) never sees passwords or tokens; it only gets the
  * card data and the names of which secrets are saved.
  */
-const { app, BrowserWindow, Tray, Menu, ipcMain, shell, nativeImage, powerMonitor } = require('electron');
+const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, shell, nativeImage, powerMonitor } = require('electron');
 const path = require('path');
 const store = require('./store');
 const providers = require('./providers');
 const Scheduler = require('./scheduler');
 const updater = require('./updater');
+const alerts = require('./alerts');
 
 const ASSETS = path.join(__dirname, '..', '..', 'assets');
 const ALLOWED_PROTOCOLS = ['https:', 'slack:'];
@@ -25,6 +26,8 @@ let win = null;
 let tray = null;
 let quitting = false;
 let scheduler = null;
+let watcher = null;
+const shown = new Set(); // Live notifications; dropped ones lose their click handler.
 
 /* ---------------------------------------------------------------- Helpers */
 
@@ -46,6 +49,28 @@ function openExternal(url) {
 	}
 	console.error('[main] Blocked opening a link:', url);
 	return false;
+}
+
+/**
+ * Show a desktop alert, unless you're looking at the dashboard and only want
+ * them while it's in the background. Clicking it opens the dashboard.
+ */
+function notify({ title, body }) {
+	if (!Notification.isSupported()) {
+		return;
+	}
+	const inFront = win && win.isVisible() && !win.isMinimized() && win.isFocused();
+	if (inFront && alerts.options(store.settings()).onlyWhenAway) {
+		return;
+	}
+	const note = new Notification({ title, body: body || '', icon: path.join(ASSETS, 'icon.png') });
+	shown.add(note);
+	note.on('click', () => {
+		shown.delete(note);
+		showWindow();
+	});
+	note.on('close', () => shown.delete(note));
+	note.show();
 }
 
 /**
@@ -219,6 +244,7 @@ function registerIpc() {
 		}
 		const account = store.saveAccount(payload, providers.fieldsFor(provider));
 		scheduler.reset(account.id);
+		watcher.forget(account.id);
 		scheduler.start();
 		return state();
 	});
@@ -226,6 +252,7 @@ function registerIpc() {
 	ipcMain.handle('account:delete', (_e, id) => {
 		store.deleteAccount(id);
 		scheduler.reset(id);
+		watcher.forget(id);
 		scheduler.start();
 		return state();
 	});
@@ -323,10 +350,19 @@ if (!app.requestSingleInstanceLock()) {
 			store.seedDemo(demo.accounts);
 			fetcher = async (account) => demo.data(account);
 		}
-		scheduler = new Scheduler((card) => send('card:update', card), fetcher);
+		watcher = alerts.create({ notify, settings: store.settings });
+		scheduler = new Scheduler(
+			(card) => {
+				send('card:update', card);
+				watcher.check(card);
+			},
+			fetcher,
+			// Cards that can alert keep checking while the window is in the tray.
+			(account) => alerts.wanted(account.provider, store.settings()),
+		);
 		registerIpc();
 		createTray();
-		// Started with Windows: sit in the tray, don't poll until opened.
+		// Started with Windows: sit in the tray; only alerting cards poll until opened.
 		const visible = !process.argv.includes('--hidden');
 		if (!visible) {
 			scheduler.pause();

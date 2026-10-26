@@ -12,11 +12,13 @@ const { app, safeStorage } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { DEFAULTS: ALERT_DEFAULTS } = require('./alerts');
 
 const DEFAULT_CONFIG = {
 	settings: {
 		startWithWindows: false,
 		closeToTray: true,
+		alerts: { ...ALERT_DEFAULTS },
 	},
 	window: null,
 	accounts: [],
@@ -216,6 +218,10 @@ function saveSettings(values) {
 		...cfg.settings,
 		startWithWindows: Boolean(values.startWithWindows),
 		closeToTray: Boolean(values.closeToTray),
+		alerts: Object.fromEntries(Object.keys(ALERT_DEFAULTS).map((key) => [
+			key,
+			values.alerts && undefined !== values.alerts[key] ? Boolean(values.alerts[key]) : ALERT_DEFAULTS[key],
+		])),
 	};
 	saveConfig();
 	return cfg.settings;
@@ -293,7 +299,7 @@ function saveWindowState(state) {
 function seedDemo(demoAccounts) {
 	configCache = {
 		...structuredClone(DEFAULT_CONFIG),
-		settings: { startWithWindows: false, closeToTray: false },
+		settings: { startWithWindows: false, closeToTray: false, alerts: { ...ALERT_DEFAULTS, uptime: false, tickets: false, claude: false } },
 		accounts: structuredClone(demoAccounts),
 	};
 	saveConfig();

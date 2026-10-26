@@ -1295,6 +1295,18 @@ select {
 	color: var(--muted);
 }
 
+fieldset.stack {
+	margin: 4px 0 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+
+fieldset.stack > legend {
+	padding: 0;
+	margin-bottom: 8px;
+}
+
 .check {
 	display: flex;
 	gap: 8px;

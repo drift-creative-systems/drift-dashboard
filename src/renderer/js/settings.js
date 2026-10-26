@@ -27,6 +27,11 @@
 		const s = app.getState().settings;
 		els.general.startWithWindows.checked = Boolean(s.startWithWindows);
 		els.general.closeToTray.checked = Boolean(s.closeToTray);
+		const alerts = s.alerts || {};
+		els.general.alertUptime.checked = false !== alerts.uptime;
+		els.general.alertTickets.checked = false !== alerts.tickets;
+		els.general.alertClaude.checked = false !== alerts.claude;
+		els.general.alertOnlyWhenAway.checked = false !== alerts.onlyWhenAway;
 	}
 
 	async function saveGeneral(event) {
@@ -36,6 +41,12 @@
 			app.setState(await window.dashboard.saveSettings({
 				startWithWindows: els.general.startWithWindows.checked,
 				closeToTray: els.general.closeToTray.checked,
+				alerts: {
+					uptime: els.general.alertUptime.checked,
+					tickets: els.general.alertTickets.checked,
+					claude: els.general.alertClaude.checked,
+					onlyWhenAway: els.general.alertOnlyWhenAway.checked,
+				},
 			}));
 			status(out, 'Saved.');
 		} catch (err) {
