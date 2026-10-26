@@ -5,12 +5,14 @@
  * The window (renderer) never sees passwords or tokens; it only gets the
  * card data and the names of which secrets are saved.
  */
-const { app, BrowserWindow, Tray, Menu, ipcMain, shell, nativeImage, powerMonitor } = require('electron');
+const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, shell, nativeImage, powerMonitor } = require('electron');
 const path = require('path');
 const store = require('./store');
 const providers = require('./providers');
 const Scheduler = require('./scheduler');
 const updater = require('./updater');
+const alerts = require('./alerts');
+const clawdhooks = require('./clawdhooks');
 
 const ASSETS = path.join(__dirname, '..', '..', 'assets');
 const ALLOWED_PROTOCOLS = ['https:', 'slack:'];
@@ -25,6 +27,9 @@ let win = null;
 let tray = null;
 let quitting = false;
 let scheduler = null;
+let watcher = null;
+const shown = new Set(); // Live notifications; dropped ones lose their click handler.
+const clawdWatchers = new Map(); // Claude account id → stop function
 
 /* ---------------------------------------------------------------- Helpers */
 
@@ -49,6 +54,28 @@ function openExternal(url) {
 }
 
 /**
+ * Show a desktop alert, unless you're looking at the dashboard and only want
+ * them while it's in the background. Clicking it opens the dashboard.
+ */
+function notify({ title, body }) {
+	if (!Notification.isSupported()) {
+		return;
+	}
+	const inFront = win && win.isVisible() && !win.isMinimized() && win.isFocused();
+	if (inFront && alerts.options(store.settings()).onlyWhenAway) {
+		return;
+	}
+	const note = new Notification({ title, body: body || '', icon: path.join(ASSETS, 'icon.png') });
+	shown.add(note);
+	note.on('click', () => {
+		shown.delete(note);
+		showWindow();
+	});
+	note.on('close', () => shown.delete(note));
+	note.show();
+}
+
+/**
  * Account list for the renderer: config fields plus which secrets are saved.
  */
 function accountsForRenderer() {
@@ -59,7 +86,49 @@ function accountsForRenderer() {
 		config: a.config,
 		savedSecrets: store.secretKeys(a.id),
 		connected: store.secretKeys(a.id).includes('refresh_token'),
+		clawdHooks: 'claude' === a.provider && !DEMO ? clawdhooks.installed(claudeRoot(a)) : undefined,
 	}));
+}
+
+function claudeRoot(account) {
+	return providers.get('claude').root(account.config.folder);
+}
+
+/** What Claude Code last told Clawd, per Claude card: { id: { state, at } }. */
+function clawdActivity() {
+	if (DEMO) {
+		return {};
+	}
+	return Object.fromEntries(store.accounts()
+		.filter((a) => 'claude' === a.provider)
+		.map((a) => [a.id, clawdhooks.read(claudeRoot(a))]));
+}
+
+/**
+ * Watch each Claude card's folder for Claude Code's hooks, and pass every
+ * change straight to the window (no need to wait for the next usage check).
+ */
+function watchClawd() {
+	clawdWatchers.forEach((stop) => stop());
+	clawdWatchers.clear();
+	if (DEMO) {
+		return;
+	}
+	for (const account of store.accounts().filter((a) => 'claude' === a.provider)) {
+		const dir = claudeRoot(account);
+		if (!require('fs').existsSync(dir)) {
+			continue;
+		}
+		let settle = null;
+		const stop = clawdhooks.watch(dir, () => {
+			clearTimeout(settle);
+			settle = setTimeout(() => send('clawd:activity', { id: account.id, activity: clawdhooks.read(dir) }), 100);
+		});
+		clawdWatchers.set(account.id, () => {
+			clearTimeout(settle);
+			stop();
+		});
+	}
 }
 
 function state() {
@@ -69,6 +138,7 @@ function state() {
 		accounts: accountsForRenderer(),
 		settings: store.settings(),
 		layout: store.layout(),
+		clawd: clawdActivity(),
 		update: updater.current(),
 		cards: scheduler.all(),
 	};
@@ -219,14 +289,42 @@ function registerIpc() {
 		}
 		const account = store.saveAccount(payload, providers.fieldsFor(provider));
 		scheduler.reset(account.id);
+		watcher.forget(account.id);
 		scheduler.start();
+		watchClawd();
 		return state();
 	});
 
 	ipcMain.handle('account:delete', (_e, id) => {
 		store.deleteAccount(id);
 		scheduler.reset(id);
+		watcher.forget(id);
 		scheduler.start();
+		watchClawd();
+		return state();
+	});
+
+	ipcMain.handle('clawd:hooks', (_e, id, on) => {
+		const account = store.account(id);
+		if (!account || 'claude' !== account.provider || DEMO) {
+			throw new Error('Only a Claude card can connect Clawd.');
+		}
+		const dir = claudeRoot(account);
+		if (on) {
+			clawdhooks.install(dir);
+		} else {
+			clawdhooks.remove(dir);
+		}
+		watchClawd();
+		return state();
+	});
+
+	ipcMain.handle('account:hide', (_e, id, hide) => {
+		store.setHidden(id, Boolean(hide));
+		// Shown again: start afresh, so it doesn't alert about everything it missed.
+		scheduler.reset(id);
+		watcher.forget(id);
+		scheduler.start(false);
 		return state();
 	});
 
@@ -323,10 +421,19 @@ if (!app.requestSingleInstanceLock()) {
 			store.seedDemo(demo.accounts);
 			fetcher = async (account) => demo.data(account);
 		}
-		scheduler = new Scheduler((card) => send('card:update', card), fetcher);
+		watcher = alerts.create({ notify, settings: store.settings });
+		scheduler = new Scheduler(
+			(card) => {
+				send('card:update', card);
+				watcher.check(card);
+			},
+			fetcher,
+			// Cards that can alert keep checking while the window is in the tray.
+			(account) => alerts.wanted(account.provider, store.settings()),
+		);
 		registerIpc();
 		createTray();
-		// Started with Windows: sit in the tray, don't poll until opened.
+		// Started with Windows: sit in the tray; only alerting cards poll until opened.
 		const visible = !process.argv.includes('--hidden');
 		if (!visible) {
 			scheduler.pause();
@@ -334,6 +441,7 @@ if (!app.requestSingleInstanceLock()) {
 		createWindow(visible);
 		applyLoginItem();
 		scheduler.start();
+		watchClawd();
 		devScreenshot();
 		updater.init({
 			send: (status) => send('update:status', status),

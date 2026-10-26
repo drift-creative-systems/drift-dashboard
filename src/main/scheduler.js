@@ -2,6 +2,9 @@
  * Polls every account on its provider's interval and pushes results to the
  * window. One failing account never affects the others: errors are kept on
  * that card (with the last good data) and retried with backoff.
+ *
+ * Hidden cards are never checked. While the window is hidden polling pauses, except for cards that can raise
+ * desktop alerts (see `background`), which carry on in the tray.
  */
 const store = require('./store');
 const providers = require('./providers');
@@ -13,10 +16,12 @@ class Scheduler {
 	/**
 	 * @param {Function} send     Receives each card snapshot.
 	 * @param {Function} fetcher  Optional replacement for provider.fetch (demo mode).
+	 * @param {Function} background  Given an account, whether to keep polling it while paused.
 	 */
-	constructor(send, fetcher = null) {
+	constructor(send, fetcher = null, background = () => false) {
 		this.send = send;
 		this.fetcher = fetcher;
+		this.background = background;
 		this.cards = new Map(); // account id → { status, data, error, updatedAt }
 		this.timers = new Map();
 		this.running = new Set();
@@ -56,7 +61,8 @@ class Scheduler {
 		if (!card || 'error' !== card.status) {
 			return;
 		}
-		if (this.paused) {
+		const account = store.account(id);
+		if (this.paused && !(account && this.background(account))) {
 			this.due.add(id);
 			return;
 		}
@@ -109,10 +115,11 @@ class Scheduler {
 	async run(id) {
 		const account = store.account(id);
 		const provider = account && providers.get(account.provider);
-		if (!provider) {
+		if (!provider || store.isHidden(id)) {
+			this.timers.delete(id);
 			return;
 		}
-		if (this.paused) {
+		if (this.paused && !this.background(account)) {
 			// Picked up again by resume().
 			this.timers.delete(id);
 			return;

@@ -11,6 +11,10 @@
  * card's been ignored for 10 minutes, sweats from 90%, lies belly-up at 100%,
  * burrows into the sand while the card has an error, and celebrates when the
  * session window resets. Click him for a random Claude Code animation.
+ *
+ * Connected to Claude Code (Settings → Connect Clawd), he also shows what it's
+ * doing: hunched over and typing while it works, arms up while it waits for
+ * you, and a wave when it finishes. The plan limit moods still win.
  */
 (function () {
 	'use strict';
@@ -250,6 +254,10 @@
 
 	const calmQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
+	// Claude Code states older than this are ignored (a session that crashed or was closed).
+	const ACTIVITY_TTL = 15 * 60 * 1000;
+	const ACTIVITY_MOOD = { working: 'work', waiting: 'wait' };
+
 	/* ------------------------------------------------------------------- Clawd */
 
 	class Clawd {
@@ -278,6 +286,7 @@
 			this.confetti = [];
 			this.lastReset = null;
 			this.lastPct = null;
+			this.activity = null; // { state, at } from Claude Code's hooks.
 
 			if (!calmQuery.matches) {
 				this.startAct(pick(ENTRANCE_ACTS));
@@ -303,7 +312,39 @@
 				this.lastPct = percent;
 			}
 
-			const says = { sleep: 'asleep in the sand', dead: 'out of session limit', idle: this.crit ? 'sweating, the session limit is nearly used' : 'pottering about' };
+			this.label();
+		}
+
+		/** What Claude Code is doing: { state, at } or null. */
+		setActivity(activity) {
+			const before = this.activity && this.activity.state;
+			this.activity = activity || null;
+			const now = this.activity && this.activity.state;
+			if (now !== before) {
+				this.idleSince = Date.now();
+				// Finished: a little wave, if he was busy or waiting.
+				if ('done' === now && ACTIVITY_MOOD[before] && !calmQuery.matches && !this.act && 'idle' === this.mood) {
+					this.startAct('wave');
+				}
+			}
+			this.label();
+		}
+
+		/** 'work' or 'wait' while Claude Code is busy or needs you, otherwise null. */
+		busyMood() {
+			const a = this.activity;
+			return a && ACTIVITY_MOOD[a.state] && Date.now() - a.at < ACTIVITY_TTL ? ACTIVITY_MOOD[a.state] : null;
+		}
+
+		label() {
+			const says = {
+				sleep: 'asleep in the sand',
+				dead: 'out of session limit',
+				work: 'busy, Claude Code is working',
+				wait: 'waving, Claude Code is waiting for you',
+				idle: this.crit ? 'sweating, the session limit is nearly used' : 'pottering about',
+			};
+			const mood = 'idle' === this.mood ? (this.busyMood() || 'idle') : this.mood;
 			this.el.setAttribute('aria-label', `Clawd, ${says[mood]}. Play an animation`);
 		}
 
@@ -397,7 +438,11 @@
 				this.idleSince = Date.now();
 			}
 			let mood = this.mood;
-			if ('idle' === mood && Date.now() - this.idleSince >= 10 * 60 * 1000) {
+			const busy = 'idle' === mood ? this.busyMood() : null;
+			if (busy) {
+				mood = busy;
+				this.idleSince = Date.now();
+			} else if ('idle' === mood && Date.now() - this.idleSince >= 10 * 60 * 1000) {
 				mood = 'doze';
 			}
 
@@ -435,6 +480,15 @@
 					f.eyes = 'blink';
 					zzz = true;
 				}
+			} else if ('work' === mood) {
+				// Facing you, eyes down, tapping away.
+				Object.assign(f, { look: 0, eyes: 'focus', arms: calm || Math.floor(this.tick / 3) % 2 ? 'right' : 'left' });
+				bubble = '…';
+			} else if ('wait' === mood) {
+				// Arms up, with a little hop now and then to get your attention.
+				const p = this.tick % 40;
+				Object.assign(f, { arms: 'up', look: null !== mouse ? mouse : 0, lift: !calm && p < 4 ? 1.5 : 0 });
+				bubble = '?';
 			} else if ('dead' === mood) {
 				Object.assign(f, { flip: true, eyes: 'x', look: 0 });
 				const p = this.tick % 50;
@@ -816,11 +870,23 @@
 		if (!clawd) {
 			clawd = new Clawd();
 			instances.set(id, clawd);
+			clawd.setActivity(activities.get(id));
 		}
 		clawd.update(state);
 		clawd.start();
 		return clawd.el;
 	}
 
-	window.BD.clawd = { mount };
+	const activities = new Map(); // Card id → { state, at }, kept for Clawds not built yet.
+
+	/** Claude Code's latest state for a card. */
+	function activity(id, value) {
+		activities.set(id, value || null);
+		const clawd = instances.get(id);
+		if (clawd) {
+			clawd.setActivity(value);
+		}
+	}
+
+	window.BD.clawd = { mount, activity };
 }());

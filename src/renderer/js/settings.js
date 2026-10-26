@@ -27,6 +27,11 @@
 		const s = app.getState().settings;
 		els.general.startWithWindows.checked = Boolean(s.startWithWindows);
 		els.general.closeToTray.checked = Boolean(s.closeToTray);
+		const alerts = s.alerts || {};
+		els.general.alertUptime.checked = false !== alerts.uptime;
+		els.general.alertTickets.checked = false !== alerts.tickets;
+		els.general.alertClaude.checked = false !== alerts.claude;
+		els.general.alertOnlyWhenAway.checked = false !== alerts.onlyWhenAway;
 	}
 
 	async function saveGeneral(event) {
@@ -36,6 +41,12 @@
 			app.setState(await window.dashboard.saveSettings({
 				startWithWindows: els.general.startWithWindows.checked,
 				closeToTray: els.general.closeToTray.checked,
+				alerts: {
+					uptime: els.general.alertUptime.checked,
+					tickets: els.general.alertTickets.checked,
+					claude: els.general.alertClaude.checked,
+					onlyWhenAway: els.general.alertOnlyWhenAway.checked,
+				},
 			}));
 			status(out, 'Saved.');
 		} catch (err) {
@@ -45,8 +56,16 @@
 
 	/* ------------------------------------------------------------- Account list */
 
+	function isHidden(account) {
+		const { layout } = app.getState();
+		return Boolean(layout && Array.isArray(layout.hidden) && layout.hidden.includes(account.id));
+	}
+
 	function accountState(account, p) {
 		const card = app.getState().cards.find((c) => c.id === account.id);
+		if (isHidden(account)) {
+			return { text: 'Hidden', cls: '' };
+		}
 		if (p.oauth && !account.connected) {
 			return { text: 'Not connected', cls: 'is-warn' };
 		}
@@ -97,6 +116,28 @@
 									},
 								},
 							}, a.connected ? 'Reconnect' : 'Connect') : null,
+							h('button', {
+								type: 'button',
+								class: ['btn', 'btn--small', isHidden(a) && 'btn--primary'],
+								'aria-label': `${isHidden(a) ? 'Show' : 'Hide'} ${name} on the dashboard`,
+								on: { click: () => window.BD.hideCard(a.id, !isHidden(a)) },
+							}, isHidden(a) ? 'Show' : 'Hide'),
+							undefined !== a.clawdHooks ? h('button', {
+								type: 'button',
+								class: 'btn btn--small',
+								title: 'Lets Clawd show when Claude Code is working or waiting for you',
+								on: {
+									click: () => {
+										const on = !a.clawdHooks;
+										const ask = on
+											? 'Connect Clawd to Claude Code?\n\nThis adds a few hooks to Claude Code’s settings.json so Clawd can show when Claude is working or waiting for you. A backup (settings.json.bonsai-backup) is saved first. New Claude Code sessions pick it up.'
+											: 'Disconnect Clawd? This removes only the dashboard’s hooks from Claude Code’s settings.json.';
+										if (window.confirm(ask)) {
+											act(() => window.dashboard.setClawdHooks(a.id, on), rowStatus);
+										}
+									},
+								},
+							}, a.clawdHooks ? 'Disconnect Clawd' : 'Connect Clawd') : null,
 							h('button', { type: 'button', class: 'btn btn--small', on: { click: () => edit(a) } }, 'Edit'),
 							h('button', { type: 'button', class: 'btn btn--small', 'aria-label': `Move ${name} up`, on: { click: () => act(() => window.dashboard.moveAccount(a.id, 'up')) } }, '↑'),
 							h('button', { type: 'button', class: 'btn btn--small', 'aria-label': `Move ${name} down`, on: { click: () => act(() => window.dashboard.moveAccount(a.id, 'down')) } }, '↓'),
