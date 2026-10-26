@@ -119,7 +119,14 @@
 						'aria-label': `Refresh ${title}`,
 						title: 'Refresh',
 						on: { click: () => window.dashboard.refresh(card.id) },
-					}, '↻')
+					}, '↻'),
+					h('button', {
+						type: 'button',
+						class: 'icon-btn card__hide',
+						'aria-label': `Hide ${title}`,
+						title: 'Hide this card (show it again in Settings)',
+						on: { click: () => window.BD.hideCard(card.id, true) },
+					}, '✕')
 				)
 			),
 			card.status === 'error' ? h('p', { class: 'card__error', role: 'alert' }, card.error) : null,

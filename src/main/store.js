@@ -12,11 +12,13 @@ const { app, safeStorage } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { DEFAULTS: ALERT_DEFAULTS } = require('./alerts');
 
 const DEFAULT_CONFIG = {
 	settings: {
 		startWithWindows: false,
 		closeToTray: true,
+		alerts: { ...ALERT_DEFAULTS },
 	},
 	window: null,
 	accounts: [],
@@ -216,6 +218,10 @@ function saveSettings(values) {
 		...cfg.settings,
 		startWithWindows: Boolean(values.startWithWindows),
 		closeToTray: Boolean(values.closeToTray),
+		alerts: Object.fromEntries(Object.keys(ALERT_DEFAULTS).map((key) => [
+			key,
+			values.alerts && undefined !== values.alerts[key] ? Boolean(values.alerts[key]) : ALERT_DEFAULTS[key],
+		])),
 	};
 	saveConfig();
 	return cfg.settings;
@@ -278,6 +284,34 @@ function saveSectionOrder(order) {
 	return cfg.layout;
 }
 
+/** Account IDs whose cards are hidden from the dashboard. */
+function hidden() {
+	return Array.isArray(layout().hidden) ? layout().hidden : [];
+}
+
+function isHidden(id) {
+	return hidden().includes(id);
+}
+
+/**
+ * Hide or show an account's card. Hidden cards aren't checked at all.
+ */
+function setHidden(id, hide) {
+	if (!account(id)) {
+		throw new Error('That card no longer exists.');
+	}
+	const ids = new Set(hidden().filter((h) => account(h)));
+	if (hide) {
+		ids.add(id);
+	} else {
+		ids.delete(id);
+	}
+	const cfg = config();
+	cfg.layout = { ...(cfg.layout || {}), hidden: [...ids] };
+	saveConfig();
+	return cfg.layout;
+}
+
 function windowState() {
 	return config().window;
 }
@@ -293,7 +327,7 @@ function saveWindowState(state) {
 function seedDemo(demoAccounts) {
 	configCache = {
 		...structuredClone(DEFAULT_CONFIG),
-		settings: { startWithWindows: false, closeToTray: false },
+		settings: { startWithWindows: false, closeToTray: false, alerts: { ...ALERT_DEFAULTS, uptime: false, tickets: false, claude: false } },
 		accounts: structuredClone(demoAccounts),
 	};
 	saveConfig();
@@ -314,6 +348,8 @@ module.exports = {
 	layout,
 	saveLayout,
 	saveSectionOrder,
+	isHidden,
+	setHidden,
 	windowState,
 	saveWindowState,
 	dataDir: dir,

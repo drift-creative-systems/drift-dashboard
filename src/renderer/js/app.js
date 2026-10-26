@@ -22,6 +22,11 @@
 		return p ? p.name : id;
 	}
 
+	function visible() {
+		const hidden = (state.layout && state.layout.hidden) || [];
+		return state.accounts.filter((a) => !hidden.includes(a.id));
+	}
+
 	function card(account) {
 		const snapshot = cards.get(account.id) || { id: account.id, provider: account.provider, label: account.label, status: 'loading' };
 		// Icon settings come from the account, so edits show without a refetch.
@@ -29,7 +34,7 @@
 	}
 
 	function calendarAccounts() {
-		return state.accounts.filter((a) => 'ics' === a.provider || ('outlook' === a.provider && a.config.show_calendar !== false));
+		return visible().filter((a) => 'ics' === a.provider || ('outlook' === a.provider && a.config.show_calendar !== false));
 	}
 
 	/** Events listed under the headline, by the Up next card's height setting. */
@@ -79,7 +84,7 @@
 		const sections = [];
 		// "Right now" stays first; the others follow your saved order.
 		for (const section of window.BD.layout.orderSections(SECTIONS)) {
-			const accounts = state.accounts.filter((a) => (META[a.provider] || {}).section === section.id);
+			const accounts = visible().filter((a) => (META[a.provider] || {}).section === section.id);
 			const items = [];
 			const entries = []; // For rearrangeable sections: { id, node, title }.
 
@@ -118,6 +123,14 @@
 			}
 			sections.push(el);
 		}
+		if (!sections.length) {
+			dashboard.replaceChildren(h('div', { class: 'empty' },
+				h('h2', null, 'Every card is hidden'),
+				h('p', { class: 'muted' }, 'Show them again from the account list in Settings.'),
+				h('button', { type: 'button', class: 'btn btn--primary', on: { click: () => showSettings(true) } }, 'Open Settings')
+			));
+			return;
+		}
 		dashboard.replaceChildren(...sections);
 		window.BD.layout.refreshSections(dashboard);
 	}
@@ -149,7 +162,7 @@
 		for (const id of ['email', 'tickets']) {
 			const el = dashboard.querySelector(`[data-count="${id}"]`);
 			if (el) {
-				const accounts = state.accounts.filter((a) => (META[a.provider] || {}).section === id);
+				const accounts = visible().filter((a) => (META[a.provider] || {}).section === id);
 				el.replaceWith(countFor(id, accounts));
 			}
 		}
@@ -202,11 +215,18 @@
 		}
 	}
 
+	function clawdActivity() {
+		if (window.BD.clawd) {
+			Object.entries(state.clawd || {}).forEach(([id, value]) => window.BD.clawd.activity(id, value));
+		}
+	}
+
 	function setState(next) {
 		state = next;
 		for (const snapshot of next.cards) {
 			cards.set(snapshot.id, snapshot);
 		}
+		clawdActivity();
 		renderDashboard();
 		window.BD.settings.refresh();
 	}
@@ -244,6 +264,16 @@
 		document.getElementById('settings-title').setAttribute('tabindex', '-1');
 
 		window.BD.settings.init({ getState: () => state, setState });
+		window.BD.hideCard = async (id, hide) => {
+			try {
+				setState(await window.dashboard.hideAccount(id, hide));
+				if (hide && !dashboard.hidden) {
+					dashboard.focus({ preventScroll: true });
+				}
+			} catch (err) {
+				console.error('Couldn’t hide the card:', err);
+			}
+		};
 		window.BD.layout.init({
 			getLayout: () => state.layout,
 			setLayout: (section, data) => {
@@ -264,9 +294,16 @@
 				window.dashboard.saveSectionOrder(order).catch((err) => console.error('Couldn’t save the section order:', err));
 			},
 		});
+		clawdActivity();
 		renderDashboard();
 
 		window.dashboard.onCard(updateCard);
+		window.dashboard.onClawd(({ id, activity }) => {
+			state.clawd = { ...(state.clawd || {}), [id]: activity };
+			if (window.BD.clawd) {
+				window.BD.clawd.activity(id, activity);
+			}
+		});
 		window.BD.update.init(state.update);
 
 		toggle.addEventListener('click', () => showSettings(settings.hidden));

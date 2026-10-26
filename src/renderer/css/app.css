@@ -609,6 +609,23 @@ select {
 	flex: none;
 }
 
+/* Hide button: only while you're on the card, like the move/height tools. */
+.card__hide {
+	opacity: 0;
+	transition: opacity 0.15s;
+}
+
+.card:hover .card__hide,
+.card:focus-within .card__hide {
+	opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.card__hide {
+		transition: none;
+	}
+}
+
 .card.is-refreshing .card__refresh {
 	animation: spin 1s linear infinite;
 }
@@ -1293,6 +1310,18 @@ select {
 .field__hint {
 	font-size: 12px;
 	color: var(--muted);
+}
+
+fieldset.stack {
+	margin: 4px 0 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+
+fieldset.stack > legend {
+	padding: 0;
+	margin-bottom: 8px;
 }
 
 .check {

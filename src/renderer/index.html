@@ -46,6 +46,14 @@
 				<form id="general-form" class="stack">
 					<label class="check"><input type="checkbox" name="startWithWindows"> Start with Windows (opens in the tray)</label>
 					<label class="check"><input type="checkbox" name="closeToTray"> Closing the window keeps it running in the tray</label>
+					<fieldset class="stack">
+						<legend class="field__label">Desktop alerts</legend>
+						<p class="field__hint">These cards keep checking while the dashboard is in the tray.</p>
+						<label class="check"><input type="checkbox" name="alertUptime"> A site goes down or comes back up</label>
+						<label class="check"><input type="checkbox" name="alertTickets"> An urgent or high-priority support ticket</label>
+						<label class="check"><input type="checkbox" name="alertClaude"> A Claude plan limit passes 90% or runs out</label>
+						<label class="check"><input type="checkbox" name="alertOnlyWhenAway"> Only when the dashboard isn't in front</label>
+					</fieldset>
 					<div><button type="submit" class="btn btn--primary">Save</button> <span class="form-status" role="status"></span></div>
 				</form>
 			</section>
