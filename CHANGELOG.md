@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.9.1] - 2026-10-26
+
+### Fixed
+- The ↑ ↓ buttons in Settings now move an account within its own group, e.g. reordering ClickUp workspaces. Before, they swapped it with the account next to it in the full list, which could belong to another provider, so nothing appeared to change.
+
 ## [1.9.0] - 2026-10-26
 
 ### Added

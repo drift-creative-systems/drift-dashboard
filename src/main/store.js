@@ -161,8 +161,17 @@ function deleteAccount(id) {
 function moveAccount(id, direction) {
 	const list = accounts();
 	const index = list.findIndex((a) => a.id === id);
-	const target = index + (direction === 'up' ? -1 : 1);
-	if (index < 0 || target < 0 || target >= list.length) {
+	if (index < 0) {
+		return;
+	}
+	// Swap with the nearest account of the same provider: accounts are shown
+	// grouped by provider, so the neighbour in the full list may be in another group.
+	const step = direction === 'up' ? -1 : 1;
+	let target = index + step;
+	while (target >= 0 && target < list.length && list[target].provider !== list[index].provider) {
+		target += step;
+	}
+	if (target < 0 || target >= list.length) {
 		return;
 	}
 	[list[index], list[target]] = [list[target], list[index]];
