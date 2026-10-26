@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('dashboard', {
 	saveAccount: (payload) => ipcRenderer.invoke('account:save', payload),
 	deleteAccount: (id) => ipcRenderer.invoke('account:delete', id),
 	moveAccount: (id, direction) => ipcRenderer.invoke('account:move', id, direction),
+	hideAccount: (id, hide) => ipcRenderer.invoke('account:hide', id, hide),
 	connect: (id) => ipcRenderer.invoke('account:connect', id),
 	refresh: (id) => ipcRenderer.invoke('cards:refresh', id),
 	saveSettings: (values) => ipcRenderer.invoke('settings:save', values),

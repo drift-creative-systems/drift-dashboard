@@ -56,8 +56,16 @@
 
 	/* ------------------------------------------------------------- Account list */
 
+	function isHidden(account) {
+		const { layout } = app.getState();
+		return Boolean(layout && Array.isArray(layout.hidden) && layout.hidden.includes(account.id));
+	}
+
 	function accountState(account, p) {
 		const card = app.getState().cards.find((c) => c.id === account.id);
+		if (isHidden(account)) {
+			return { text: 'Hidden', cls: '' };
+		}
 		if (p.oauth && !account.connected) {
 			return { text: 'Not connected', cls: 'is-warn' };
 		}
@@ -108,6 +116,12 @@
 									},
 								},
 							}, a.connected ? 'Reconnect' : 'Connect') : null,
+							h('button', {
+								type: 'button',
+								class: ['btn', 'btn--small', isHidden(a) && 'btn--primary'],
+								'aria-label': `${isHidden(a) ? 'Show' : 'Hide'} ${name} on the dashboard`,
+								on: { click: () => window.BD.hideCard(a.id, !isHidden(a)) },
+							}, isHidden(a) ? 'Show' : 'Hide'),
 							h('button', { type: 'button', class: 'btn btn--small', on: { click: () => edit(a) } }, 'Edit'),
 							h('button', { type: 'button', class: 'btn btn--small', 'aria-label': `Move ${name} up`, on: { click: () => act(() => window.dashboard.moveAccount(a.id, 'up')) } }, '↑'),
 							h('button', { type: 'button', class: 'btn btn--small', 'aria-label': `Move ${name} down`, on: { click: () => act(() => window.dashboard.moveAccount(a.id, 'down')) } }, '↓'),

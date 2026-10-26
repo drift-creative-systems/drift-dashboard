@@ -3,7 +3,7 @@
  * window. One failing account never affects the others: errors are kept on
  * that card (with the last good data) and retried with backoff.
  *
- * While the window is hidden polling pauses, except for cards that can raise
+ * Hidden cards are never checked. While the window is hidden polling pauses, except for cards that can raise
  * desktop alerts (see `background`), which carry on in the tray.
  */
 const store = require('./store');
@@ -115,7 +115,8 @@ class Scheduler {
 	async run(id) {
 		const account = store.account(id);
 		const provider = account && providers.get(account.provider);
-		if (!provider) {
+		if (!provider || store.isHidden(id)) {
+			this.timers.delete(id);
 			return;
 		}
 		if (this.paused && !this.background(account)) {

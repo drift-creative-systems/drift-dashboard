@@ -257,6 +257,15 @@ function registerIpc() {
 		return state();
 	});
 
+	ipcMain.handle('account:hide', (_e, id, hide) => {
+		store.setHidden(id, Boolean(hide));
+		// Shown again: start afresh, so it doesn't alert about everything it missed.
+		scheduler.reset(id);
+		watcher.forget(id);
+		scheduler.start(false);
+		return state();
+	});
+
 	ipcMain.handle('account:move', (_e, id, direction) => {
 		store.moveAccount(id, direction);
 		return state();

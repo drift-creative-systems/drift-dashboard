@@ -284,6 +284,34 @@ function saveSectionOrder(order) {
 	return cfg.layout;
 }
 
+/** Account IDs whose cards are hidden from the dashboard. */
+function hidden() {
+	return Array.isArray(layout().hidden) ? layout().hidden : [];
+}
+
+function isHidden(id) {
+	return hidden().includes(id);
+}
+
+/**
+ * Hide or show an account's card. Hidden cards aren't checked at all.
+ */
+function setHidden(id, hide) {
+	if (!account(id)) {
+		throw new Error('That card no longer exists.');
+	}
+	const ids = new Set(hidden().filter((h) => account(h)));
+	if (hide) {
+		ids.add(id);
+	} else {
+		ids.delete(id);
+	}
+	const cfg = config();
+	cfg.layout = { ...(cfg.layout || {}), hidden: [...ids] };
+	saveConfig();
+	return cfg.layout;
+}
+
 function windowState() {
 	return config().window;
 }
@@ -320,6 +348,8 @@ module.exports = {
 	layout,
 	saveLayout,
 	saveSectionOrder,
+	isHidden,
+	setHidden,
 	windowState,
 	saveWindowState,
 	dataDir: dir,
