@@ -523,7 +523,7 @@ To start again from scratch, quit the app (tray → Quit) and delete `%APPDATA%\
 | Calendar event missing | Google refreshes secret iCal links every few hours. Outlook and Google Calendar sign-in cards are near-instant. |
 | Google Calendar "sign-in has expired" every week | The Google Cloud app is still in **Testing**. Google Auth Platform → Audience → **Publish app**, then **Reconnect** the card. |
 | Google sign-in: "Access blocked" or "redirect_uri_mismatch" | Make sure the OAuth client is a **Desktop app** (not "Web application"), and you used its own ID and secret. |
-| Started with Windows but nothing shows | It starts in the tray. Click the pink tray icon (it may be under the **^** arrow). |
+| Started with Windows but nothing shows | It starts in the tray. Click the black **D** tray icon (it may be under the **^** arrow). |
 
 ## Development
 
@@ -595,7 +595,9 @@ src/renderer/        the window: plain HTML/CSS/JS, no framework
 
 **Adding a new card type:** create `src/main/providers/<name>.js` exporting `id`, `name`, `section`, `interval`, `fields`, `fetch()` (and `connect()` if it uses sign-in), register it in `providers/index.js`, then add a renderer and icon in `src/renderer/js/cards.js`. The settings form is built automatically from `fields`. For its in-app setup guide, add a `### ` section to Part 2 of this README and put its heading in the provider's `guide` (or `GUIDES` in `providers/index.js`).
 
-**Icons:** `npm run icons` draws them in code (`scripts/make-icons.js`), so they're easy to change: colours, corner radius and ring sizes are at the top of `mark()`. The macOS menu bar uses `trayTemplate.png` / `trayTemplate@2x.png` (black and transparent only, which macOS tints for light and dark menu bars); Windows uses the pink `tray.png` / `tray@2x.png`.
+**Icons:** `npm run icons` draws them in code (`scripts/make-icons.js`) from the Drift D in the brand pack (`Drift_Complete_Brand_Pack/Logos/drift-creative-systems/square-transparent.svg`; its paths are copied into `D_SHAPES`). The app icon matches the pack's `square-dark`: a white D on a near-black rounded square. The macOS menu bar uses `trayTemplate.png` / `trayTemplate@2x.png` (the D alone, black and transparent, which macOS tints for light and dark menu bars); Windows uses the same dark square in `tray.png` / `tray@2x.png`, with the D drawn a little larger so it reads at 16px.
+
+**Colours:** the app follows the Drift master brand, which is monochrome: black, white and grey (`#7A7F87`), set as tokens at the top of `src/renderer/css/app.css`. Colour is kept for status (green, amber, red), the keyboard focus ring and each service's own logo. The header shows the D on a tile that inverts with the theme.
 
 **Security model:** the window runs sandboxed with context isolation and a strict Content Security Policy. It can't reach Node, the file system or the network, and never sees passwords or tokens. All card text is inserted as text, never HTML. Links only open if they're `https:` or `slack:`. If you've chosen an app for links, it's started directly with the link as its only argument (no shell), so nothing in a link can run as a command.
 

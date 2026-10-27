@@ -3,19 +3,22 @@
    Tokens → base → top bar → dashboard grid → cards → settings
    ========================================================================== */
 
+/* Drift master brand: monochrome. Black, white and neutral grey; colour is
+   kept for status (ok / warn / error), focus and the services' own logos. */
 :root {
-	--pink: #ee4367;
-	--blue: #e2ecf3;
 	--black: #000;
+	--white: #fff;
+	--grey: #7a7f87;
 
-	--bg: #0e0f12;
-	--surface: #17191e;
-	--surface-2: #1f2228;
-	--border: #2a2e36;
-	--text: #eef2f6;
-	--muted: #9ba5b2;
-	--accent: var(--pink);
-	--accent-text: #ff6f8e;
+	--bg: #0b0c0d;
+	--surface: #151618;
+	--surface-2: #1d1f22;
+	--border: #2b2d31;
+	--text: #f2f3f5;
+	--muted: #9a9ea5;
+	--accent: var(--text);
+	--accent-contrast: var(--bg); /* Text on an --accent background. */
+	--accent-text: var(--white);
 	--ok: #3fb97a;
 	--warn: #e8a33d;
 	--error: #ff6b6b;
@@ -32,13 +35,13 @@
 
 @media (prefers-color-scheme: light) {
 	:root {
-		--bg: var(--blue);
-		--surface: #fff;
-		--surface-2: #f3f7fa;
-		--border: #cfdbe5;
+		--bg: #f2f3f5;
+		--surface: var(--white);
+		--surface-2: #f6f7f8;
+		--border: #d9dbdf;
 		--text: var(--black);
-		--muted: #4c5866;
-		--accent-text: #c4194a; /* Pink darkened for 4.5:1 on white. */
+		--muted: #5b6068; /* Brand grey darkened for 4.5:1 on white. */
+		--accent-text: var(--black);
 		--ok: #1d7a4b;
 		--warn: #94600b;
 		--error: #c42b2b;
@@ -140,7 +143,7 @@ select {
 .btn--primary {
 	background: var(--accent);
 	border-color: var(--accent);
-	color: #fff;
+	color: var(--accent-contrast);
 	font-weight: 600;
 }
 
@@ -201,12 +204,22 @@ select {
 	gap: 12px;
 }
 
+/* The Drift D on a rounded square, inverted against the page (the brand's
+   high-contrast rule): white tile on the dark theme, black on the light. */
 .topbar__mark {
+	display: grid;
+	place-items: center;
 	width: 34px;
 	height: 34px;
-	border-radius: 10px;
-	background: linear-gradient(135deg, var(--pink), #b8234a);
-	box-shadow: inset 0 0 0 7px color-mix(in srgb, var(--blue) 25%, transparent);
+	border-radius: 7px; /* The brand square's corner, 200/1024 of its side. */
+	background: var(--text);
+	color: var(--bg);
+}
+
+.topbar__mark svg {
+	width: 74%;
+	height: 74%;
+	fill: currentColor;
 }
 
 .topbar__title {
@@ -447,7 +460,7 @@ select {
 
 .slot__btn:hover {
 	background: var(--accent);
-	color: #fff;
+	color: var(--accent-contrast);
 }
 
 .slot__grip {
@@ -533,7 +546,7 @@ select {
 	place-items: center;
 	font: 700 12px/1 var(--font);
 	color: #fff;
-	background: var(--brand, var(--accent));
+	background: var(--brand, var(--grey));
 	/* Keeps dark logos (e.g. GitHub) visible on the dark theme. */
 	box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
 	overflow: hidden;
@@ -555,8 +568,9 @@ select {
 
 /* The Bonsai mark, for our own services (support tickets, uptime). */
 .card__icon--bonsai {
-	background: linear-gradient(135deg, var(--pink), #b8234a);
-	box-shadow: inset 0 0 0 6px color-mix(in srgb, var(--pink) 85%, transparent), inset 0 0 0 9px var(--blue);
+	/* Bonsai's own colours: this is their mark, not ours. */
+	background: linear-gradient(135deg, #ee4367, #b8234a);
+	box-shadow: inset 0 0 0 6px color-mix(in srgb, #ee4367 85%, transparent), inset 0 0 0 9px #e2ecf3;
 }
 
 .color-row {
@@ -686,7 +700,7 @@ select {
 	font-size: 11px;
 	font-weight: 700;
 	background: var(--accent);
-	color: #fff;
+	color: var(--accent-contrast);
 	justify-content: center;
 	flex: none;
 }
@@ -955,7 +969,7 @@ select {
 	--clawd-fx: var(--muted);
 	--clawd-sweat: #60a5fa;
 	--clawd-note: #93c5fd;
-	--clawd-heart: var(--pink);
+	--clawd-heart: #f43f5e;
 	--clawd-soul: #dbeafe;
 	display: block;
 	width: 100%;
