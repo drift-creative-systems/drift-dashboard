@@ -1,11 +1,12 @@
 /**
- * Bonsai Dashboard: Electron main process.
+ * Drift Dashboard: Electron main process.
  *
  * Owns the window, tray icon, settings storage and all network access.
  * The window (renderer) never sees passwords or tokens; it only gets the
  * card data and the names of which secrets are saved.
  */
 const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, shell, nativeImage, powerMonitor } = require('electron');
+const fs = require('fs');
 const path = require('path');
 const store = require('./store');
 const providers = require('./providers');
@@ -22,7 +23,37 @@ const DEMO = process.argv.includes('--demo');
 
 // Demo mode keeps its settings in a temp folder, away from your real ones.
 if (DEMO) {
-	app.setPath('userData', path.join(app.getPath('temp'), 'bonsai-dashboard-demo'));
+	app.setPath('userData', path.join(app.getPath('temp'), 'drift-dashboard-demo'));
+} else {
+	migrateUserData();
+}
+
+/**
+ * Up to 1.10.0 the app was "Bonsai Dashboard", with its settings in a folder
+ * of that name. Copy them across once, the first time Drift Dashboard starts
+ * without a config of its own. The old folder is left as a backup.
+ *
+ * On Windows the encryption key travels with the folder (Local State, sealed
+ * by DPAPI to your user), so saved passwords still work. On a Mac the key is
+ * in the keychain under the app's name, so passwords need entering again.
+ */
+function migrateUserData() {
+	const target = app.getPath('userData');
+	const old = path.join(app.getPath('appData'), 'Bonsai Dashboard');
+	if (fs.existsSync(path.join(target, 'config.json')) || !fs.existsSync(path.join(old, 'config.json'))) {
+		return;
+	}
+	const first = ['secrets.json', 'Local State', 'config.json']; // Config last: its presence marks the copy done.
+	const skip = ['Cache', 'Code Cache', 'GPUCache', 'GPUPersistentCache', 'GrShaderCache', 'ShaderCache', 'DawnCache', 'DawnGraphiteCache', 'DawnWebGPUCache', 'Crashpad', 'SingletonLock', 'SingletonSocket', 'SingletonCookie', 'lockfile'];
+	const rest = fs.readdirSync(old).filter((name) => !first.includes(name) && !skip.includes(name));
+	// One at a time, so a file the old app still has open doesn't stop the rest.
+	for (const name of [...rest, ...first]) {
+		try {
+			fs.cpSync(path.join(old, name), path.join(target, name), { recursive: true, force: false });
+		} catch (err) {
+			console.error(`[main] Could not copy ${name} from Bonsai Dashboard:`, err.message);
+		}
+	}
 }
 
 let win = null;
@@ -224,7 +255,7 @@ function createWindow(showOnReady) {
 		minHeight: 560,
 		...(saved && saved.bounds ? saved.bounds : {}),
 		show: false,
-		title: 'Bonsai Dashboard',
+		title: 'Drift Dashboard',
 		backgroundColor: '#0e0f12',
 		autoHideMenuBar: true,
 		icon: path.join(ASSETS, 'icon.png'),
@@ -327,7 +358,7 @@ function trayImage() {
 function createTray() {
 	const image = trayImage();
 	tray = new Tray(image.isEmpty() ? nativeImage.createEmpty() : image);
-	tray.setToolTip('Bonsai Dashboard');
+	tray.setToolTip('Drift Dashboard');
 	bar = menubar.create({
 		tray,
 		cards: () => scheduler.all(),

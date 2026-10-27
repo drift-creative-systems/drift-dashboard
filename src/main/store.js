@@ -6,7 +6,7 @@
  *                OAuth tokens). Encrypted with Electron safeStorage, which
  *                on Windows is DPAPI: only your Windows user can decrypt it.
  *
- * Both live in %APPDATA%\Bonsai Dashboard, never in the project folder.
+ * Both live in %APPDATA%\Drift Dashboard, never in the project folder.
  */
 const { app, safeStorage } = require('electron');
 const fs = require('fs');
@@ -122,7 +122,7 @@ function saveAccount({ id, provider, label, values }, fields) {
 			throw new Error(`${field.label}: use at most ${field.maxGraphemes} characters.`);
 		}
 		if ('color' === field.type && raw && !/^#[0-9a-f]{6}$/i.test(raw)) {
-			throw new Error(`${field.label} must be a colour like #ee4367.`);
+			throw new Error(`${field.label} must be a colour like #7a7f87.`);
 		}
 		if ('select' === field.type && raw && !field.options.some((o) => o.value === raw)) {
 			throw new Error(`${field.label}: pick one of the options.`);

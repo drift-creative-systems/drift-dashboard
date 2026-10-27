@@ -13,7 +13,7 @@ const { request } = require('../http');
 const SERVICE = 'Drift: Record';
 const DEFAULT_API = 'https://record.driftcreativesystems.co.uk/wp-json/drift-record/v1/';
 const NAMESPACE = '/wp-json/drift-record/v1/';
-const DEVICE = 'Bonsai Dashboard';
+const DEVICE = 'Drift Dashboard';
 const SHOW = 4; // Events listed under the headline one.
 
 // Statuses that mean you're (still) going. Older rows may have none.

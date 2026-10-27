@@ -1,0 +1,74 @@
+# Builds the Windows installer and publishes it to the public releases repo
+# whenever a version tag (v1.2.3) is pushed. Installed copies pick it up
+# through electron-updater, as with a release made by hand.
+#
+# Needs one secret, RELEASES_TOKEN: a fine-grained token with
+# Contents: read and write on drift-creative-systems/bonsai-dashboard-releases.
+#
+# A macOS job can be added here once the app is signed with an Apple
+# Developer ID; unsigned Mac builds aren't fit to hand out.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  RELEASES_REPO: drift-creative-systems/bonsai-dashboard-releases
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Check the tag matches package.json
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match package.json version $version"
+            exit 1
+          fi
+
+      - run: npm ci
+
+      - run: npm run check
+
+      # Created first because electron-builder uploads files in parallel and
+      # they race to create the release ("Published releases must have a valid tag").
+      - name: Create the release from the CHANGELOG entry
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if gh release view "$GITHUB_REF_NAME" -R "$RELEASES_REPO" > /dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists; uploading to it."
+            exit 0
+          fi
+          awk -v v="$version" '
+            /^## \[/ { if (found) exit; if (index($0, "## [" v "]") == 1) { found = 1; next } }
+            found
+          ' CHANGELOG.md | tr -d '\r' > notes.md
+          gh release create "$GITHUB_REF_NAME" -R "$RELEASES_REPO" \
+            --title "Drift Dashboard $version" --notes-file notes.md
+
+      - name: Build and publish
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        run: npm run release

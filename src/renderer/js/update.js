@@ -43,7 +43,7 @@
 
 		const offer = 'ready' === status.state && status.version !== dismissed;
 		if (offer) {
-			barText.textContent = `Bonsai Dashboard ${status.version} is ready.`;
+			barText.textContent = `Drift Dashboard ${status.version} is ready.`;
 		}
 		bar.hidden = !offer;
 	}

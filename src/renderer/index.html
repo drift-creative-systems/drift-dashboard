@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https: data:; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
-	<title>Bonsai Dashboard</title>
+	<title>Drift Dashboard</title>
 	<link rel="stylesheet" href="css/app.css">
 </head>
 <body>
@@ -12,9 +12,16 @@
 
 	<header class="topbar">
 		<div class="topbar__brand">
-			<span class="topbar__mark" aria-hidden="true"></span>
+			<span class="topbar__mark" aria-hidden="true">
+				<svg viewBox="0 0 100 100" focusable="false">
+					<path d="M17 12H54C77 12 91 29 91 50C91 72 76 88 54 88H45L55 76H54C70 76 79 64 79 50C79 35 69 24 54 24H29V44H17Z"/>
+					<path d="M17 55H29L17 67Z"/>
+					<path d="M41 55H54L25 88H12Z"/>
+					<path d="M55 76H70L59 88H43Z"/>
+				</svg>
+			</span>
 			<div>
-				<h1 class="topbar__title">Dashboard</h1>
+				<h1 class="topbar__title">Drift: Dashboard</h1>
 				<p class="topbar__date" id="clock">&nbsp;</p>
 			</div>
 		</div>
@@ -122,7 +129,7 @@
 				<div><button type="button" class="btn btn--ghost" id="check-updates">Check for updates</button> <span class="form-status js-update-status" role="status"></span></div>
 			</section>
 
-			<p class="muted small">Bonsai Dashboard <span id="version"></span> · Setup steps for each service are under "How to set this up" when you add or edit an account, and in the README.</p>
+			<p class="muted small">Drift Dashboard <span id="version"></span> · Setup steps for each service are under "How to set this up" when you add or edit an account, and in the README.</p>
 		</div>
 	</section>
 
