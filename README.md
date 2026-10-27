@@ -543,15 +543,20 @@ Source stays in this private repo. Installers and `latest.yml` (which the update
 
 1. Bump `version` in `package.json`, add a CHANGELOG entry, merge `develop` → `main`.
 2. Tag it: `git tag -a v1.2.0 -m "v1.2.0"` then `git push origin main --tags`.
-3. Create the release in the public repo first. electron-builder uploads two files at once, and if both try to create the release, one fails with "Published releases must have a valid tag":
+3. That's it. The **Release** workflow (`.github/workflows/release.yml`) runs on the tag: it checks the tag matches `package.json`, runs `npm run check`, creates the release in the public repo with that version's CHANGELOG entry as its notes, then builds the Windows installer and uploads it, its `.blockmap` and `latest.yml`. Watch it under the repo's **Actions** tab. Installed copies pick it up on next launch, or within 6 hours.
+
+The workflow needs one repo secret, `RELEASES_TOKEN`: a fine-grained personal access token with **Contents: Read and write** on `bonsai-dashboard-releases` only (Settings → Secrets and variables → Actions). Renew it before it expires.
+
+**By hand** (if Actions is down, or the secret has expired):
+
+1. Create the release in the public repo first. electron-builder uploads two files at once, and if both try to create the release, one fails with "Published releases must have a valid tag":
    ```powershell
    gh release create v1.2.0 -R drift-creative-systems/bonsai-dashboard-releases --title "Bonsai Dashboard 1.2.0" --notes "What's new: ..."
    ```
-4. Publish, using your own GitHub login for the upload (needs write access to the releases repo):
+2. Publish, using your own GitHub login for the upload (needs write access to the releases repo):
    ```powershell
    $env:GH_TOKEN = gh auth token; npm run release; Remove-Item Env:GH_TOKEN
    ```
-   This builds the installer and uploads it, its `.blockmap` and `latest.yml` to a release named after the version. Installed copies pick it up on next launch, or within 6 hours.
 
 Never commit `GH_TOKEN`.
 
