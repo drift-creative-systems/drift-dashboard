@@ -248,7 +248,7 @@
 		// A colour picker always has a value, so track whether it's really
 		// been chosen (data-set); unset means "use the service's colour".
 		if ('color' === field.type) {
-			const picker = h('input', { type: 'color', name: field.key, id, value: value || '#ee4367', data: { set: value ? '1' : '' } });
+			const picker = h('input', { type: 'color', name: field.key, id, value: value || '#7a7f87', data: { set: value ? '1' : '' } });
 			const state = h('span', { class: 'field__hint' }, value ? '' : 'Using the default colour');
 			picker.addEventListener('input', () => {
 				picker.dataset.set = '1';

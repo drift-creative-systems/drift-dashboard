@@ -30,8 +30,8 @@ function pkce() {
 }
 
 const PAGE = (title, message) => `<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><title>${title}</title>
-<style>body{font-family:Segoe UI,system-ui,sans-serif;background:#e2ecf3;color:#000;display:grid;place-items:center;height:100vh;margin:0}
-main{background:#fff;padding:2rem 2.5rem;border-radius:12px;border-top:6px solid #ee4367;max-width:28rem}h1{margin:0 0 .5rem;font-size:1.4rem}</style>
+<style>body{font-family:Segoe UI,system-ui,sans-serif;background:#f2f3f5;color:#000;display:grid;place-items:center;height:100vh;margin:0}
+main{background:#fff;padding:2rem 2.5rem;border-radius:12px;border-top:6px solid #000;max-width:28rem}h1{margin:0 0 .5rem;font-size:1.4rem}</style>
 </head><body><main><h1>${title}</h1><p>${message}</p></main></body></html>`;
 
 let active = null;
