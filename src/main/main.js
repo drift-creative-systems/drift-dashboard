@@ -13,6 +13,8 @@ const Scheduler = require('./scheduler');
 const updater = require('./updater');
 const alerts = require('./alerts');
 const clawdhooks = require('./clawdhooks');
+const linkapps = require('./linkapps');
+const menubar = require('./menubar');
 
 const ASSETS = path.join(__dirname, '..', '..', 'assets');
 const ALLOWED_PROTOCOLS = ['https:', 'slack:'];
@@ -25,6 +27,8 @@ if (DEMO) {
 
 let win = null;
 let tray = null;
+let bar = null; // Menu bar text and menu (menubar.js).
+let launched = false; // Set shortly after start-up (see 'activate').
 let quitting = false;
 let scheduler = null;
 let watcher = null;
@@ -39,9 +43,22 @@ function send(channel, payload) {
 	}
 }
 
-function openExternal(url) {
+/**
+ * The app chosen for a card's links: the card's own choice, else the one in
+ * Settings → General, else '' (the default browser).
+ */
+function linkAppFor(accountId) {
+	const account = accountId ? store.account(accountId) : null;
+	return (account && account.config.link_app) || store.settings().linkApp || '';
+}
+
+function openExternal(url, accountId = null) {
 	try {
 		const parsed = new URL(url);
+		if ('https:' === parsed.protocol) {
+			linkapps.open(parsed.toString(), linkAppFor(accountId));
+			return true;
+		}
 		if (ALLOWED_PROTOCOLS.includes(parsed.protocol)) {
 			shell.openExternal(parsed.toString());
 			return true;
@@ -79,15 +96,33 @@ function notify({ title, body }) {
  * Account list for the renderer: config fields plus which secrets are saved.
  */
 function accountsForRenderer() {
-	return store.accounts().map((a) => ({
-		id: a.id,
-		provider: a.provider,
-		label: a.label,
-		config: a.config,
-		savedSecrets: store.secretKeys(a.id),
-		connected: store.secretKeys(a.id).includes('refresh_token'),
-		clawdHooks: 'claude' === a.provider && !DEMO ? clawdhooks.installed(claudeRoot(a)) : undefined,
-	}));
+	return store.accounts().map((a) => {
+		const provider = providers.get(a.provider);
+		return {
+			id: a.id,
+			provider: a.provider,
+			label: a.label,
+			config: provider && provider.formConfig ? provider.formConfig(a.config) : a.config,
+			savedSecrets: store.secretKeys(a.id),
+			connected: store.secretKeys(a.id).includes('refresh_token'),
+			clawdHooks: 'claude' === a.provider && !DEMO ? clawdhooks.installed(claudeRoot(a)) : undefined,
+		};
+	});
+}
+
+/**
+ * Apps that can open links: the browsers found on this computer, plus any
+ * other app already chosen in Settings, so the menus can show its name.
+ */
+function linkApps() {
+	const apps = [...linkapps.list()];
+	const chosen = [store.settings().linkApp, ...store.accounts().map((a) => a.config.link_app)];
+	for (const p of chosen) {
+		if (p && !apps.some((a) => a.path === p)) {
+			apps.push({ path: p, name: linkapps.name(p), missing: !linkapps.valid(p) });
+		}
+	}
+	return apps;
 }
 
 function claudeRoot(account) {
@@ -135,6 +170,8 @@ function state() {
 	return {
 		version: app.getVersion(),
 		providers: providers.describe(),
+		platform: process.platform,
+		linkApps: linkApps(),
 		accounts: accountsForRenderer(),
 		settings: store.settings(),
 		layout: store.layout(),
@@ -146,12 +183,27 @@ function state() {
 
 function applyLoginItem() {
 	if (!app.isPackaged) {
-		return; // Don't register the dev copy of Electron to start with Windows.
+		return; // Don't register the dev copy of Electron to start at login.
 	}
-	app.setLoginItemSettings({
-		openAtLogin: Boolean(store.settings().startWithWindows),
-		args: ['--hidden'],
-	});
+	const openAtLogin = Boolean(store.settings().startWithWindows); // "Open at login" on a Mac.
+	if ('darwin' === process.platform) {
+		// macOS can't pass --hidden; startedAtLogin() checks how it was opened instead.
+		app.setLoginItemSettings({ openAtLogin, openAsHidden: true });
+	} else {
+		app.setLoginItemSettings({ openAtLogin, args: ['--hidden'] });
+	}
+}
+
+/** Opened by "Start with Windows" / "Open at login", so start in the tray / menu bar. */
+function startedAtLogin() {
+	if (process.argv.includes('--hidden')) {
+		return true;
+	}
+	if ('darwin' === process.platform && app.isPackaged) {
+		const login = app.getLoginItemSettings();
+		return Boolean(login.wasOpenedAtLogin || login.wasOpenedAsHidden);
+	}
+	return false;
 }
 
 /* ------------------------------------------------------------------ Window */
@@ -258,23 +310,50 @@ function showWindow() {
 	win.focus();
 }
 
+/**
+ * macOS menu bar: a black-and-clear "template" image, which macOS recolours
+ * for light and dark menu bars. Windows tray: the pink mark. Both load their
+ * @2x versions automatically on high-resolution screens.
+ */
+function trayImage() {
+	const mac = 'darwin' === process.platform;
+	const image = nativeImage.createFromPath(path.join(ASSETS, mac ? 'trayTemplate.png' : 'tray.png'));
+	if (mac) {
+		image.setTemplateImage(true);
+	}
+	return image;
+}
+
 function createTray() {
-	const image = nativeImage.createFromPath(path.join(ASSETS, 'tray.png'));
+	const image = trayImage();
 	tray = new Tray(image.isEmpty() ? nativeImage.createEmpty() : image);
 	tray.setToolTip('Bonsai Dashboard');
-	tray.setContextMenu(Menu.buildFromTemplate([
-		{ label: 'Open dashboard', click: showWindow },
-		{ label: 'Refresh everything', click: () => scheduler.refresh() },
-		{ type: 'separator' },
-		{
-			label: 'Quit',
-			click: () => {
-				quitting = true;
-				app.quit();
-			},
+	bar = menubar.create({
+		tray,
+		cards: () => scheduler.all(),
+		accounts: () => store.accounts(),
+		isHidden: (id) => store.isHidden(id),
+		settings: () => store.settings(),
+		setMode: (mode) => {
+			store.saveSettings({ ...store.settings(), menuBar: mode });
+			scheduler.start(false); // The new source may need to check in the background.
+			bar.update();
+			send('settings:changed', state());
 		},
-	]));
-	tray.on('click', showWindow);
+		openLink: (url, accountId) => openExternal(url, accountId),
+		showWindow,
+		refresh: () => scheduler.refresh(),
+		quit: () => {
+			quitting = true;
+			app.quit();
+		},
+	});
+	bar.start();
+	// On a Mac, clicking the icon opens the menu (it has Open dashboard).
+	// On Windows, left-click opens the dashboard and right-click the menu.
+	if ('darwin' !== process.platform) {
+		tray.on('click', showWindow);
+	}
 }
 
 /* --------------------------------------------------------------------- IPC */
@@ -354,13 +433,18 @@ function registerIpc() {
 	ipcMain.handle('settings:save', (_e, values) => {
 		store.saveSettings(values || {});
 		applyLoginItem();
+		scheduler.start(false); // The menu bar source may now need background checks.
+		if (bar) {
+			bar.update();
+		}
 		return state();
 	});
 
 	ipcMain.handle('layout:save', (_e, section, data) => store.saveLayout(section, data));
 	ipcMain.handle('layout:sections', (_e, order) => store.saveSectionOrder(order));
 
-	ipcMain.handle('link:open', (_e, url) => openExternal(url));
+	ipcMain.handle('link:open', (_e, url, accountId) => openExternal(url, typeof accountId === 'string' ? accountId : null));
+	ipcMain.handle('apps:choose', () => linkapps.choose(win));
 
 	ipcMain.handle('update:check', () => updater.check());
 	ipcMain.handle('update:install', () => updater.install());
@@ -426,15 +510,22 @@ if (!app.requestSingleInstanceLock()) {
 			(card) => {
 				send('card:update', card);
 				watcher.check(card);
+				if (bar) {
+					bar.update();
+				}
 			},
 			fetcher,
-			// Cards that can alert keep checking while the window is in the tray.
-			(account) => alerts.wanted(account.provider, store.settings()),
+			// Cards that can alert, or that feed the menu bar text, keep
+			// checking while the window is in the tray.
+			(account) => alerts.wanted(account.provider, store.settings()) || menubar.wanted(account.provider, store.settings()),
 		);
 		registerIpc();
 		createTray();
 		// Started with Windows: sit in the tray; only alerting cards poll until opened.
-		const visible = !process.argv.includes('--hidden');
+		const visible = !startedAtLogin();
+		setTimeout(() => {
+			launched = true;
+		}, 2000);
 		if (!visible) {
 			scheduler.pause();
 		}
@@ -461,6 +552,15 @@ if (!app.requestSingleInstanceLock()) {
 
 	app.on('before-quit', () => {
 		quitting = true;
+	});
+
+	// macOS: clicking the Dock icon (or opening the app again) brings the window
+	// back. Ignored while starting, when macOS sends it too, so opening at
+	// login stays in the menu bar.
+	app.on('activate', () => {
+		if (launched) {
+			showWindow();
+		}
 	});
 
 	// Closing the window keeps the app in the tray, so don't quit here.

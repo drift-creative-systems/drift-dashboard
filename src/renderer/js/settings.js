@@ -21,12 +21,66 @@
 		return app.getState().providers.find((p) => p.id === id);
 	}
 
+	/* --------------------------------------------------------------- Link apps */
+
+	const CHOOSE = '__choose__';
+
+	/**
+	 * A menu of apps to open links with: `blank` first (the default), then the
+	 * browsers found on this computer and any app chosen before, then
+	 * "Choose another app…", which opens the system file picker.
+	 */
+	function appSelect(attrs, value, blank) {
+		const apps = app.getState().linkApps || [];
+		const option = (a) => h('option', { value: a.path, selected: a.path === value }, a.missing ? `${a.name} (not found)` : a.name);
+		const select = h('select', { ...attrs, data: { value: value || '' } },
+			h('option', { value: '', selected: !value }, blank),
+			apps.map(option),
+			h('option', { value: CHOOSE }, 'Choose another app…')
+		);
+		select.addEventListener('change', async () => {
+			if (CHOOSE !== select.value) {
+				select.dataset.value = select.value;
+				return;
+			}
+			let picked = null;
+			try {
+				picked = await window.dashboard.chooseApp();
+			} catch (err) {
+				window.alert(errorMessage(err));
+			}
+			if (!picked) {
+				select.value = select.dataset.value; // Cancelled: back to what it was.
+				return;
+			}
+			let existing = [...select.options].find((o) => o.value === picked.path);
+			if (!existing) {
+				existing = h('option', { value: picked.path }, picked.name);
+				select.insertBefore(existing, select.lastElementChild);
+			}
+			select.value = picked.path;
+			select.dataset.value = picked.path;
+		});
+		return select;
+	}
+
 	/* ------------------------------------------------------------------ General */
 
 	function fillGeneral() {
 		const s = app.getState().settings;
 		els.general.startWithWindows.checked = Boolean(s.startWithWindows);
 		els.general.closeToTray.checked = Boolean(s.closeToTray);
+		els.linkApp.replaceChildren(appSelect({ name: 'linkApp', id: 'general-link-app' }, s.linkApp || '', 'Your default browser'));
+		els.general.menuBar.value = s.menuBar || 'none';
+		if ('darwin' === app.getState().platform) {
+			document.querySelector('.js-login-label').textContent = 'Open at login (starts in the menu bar)';
+			document.querySelector('.js-accounts-intro').textContent = 'Each account becomes a card. Passwords and tokens are encrypted with a key kept in your Mac’s keychain and never leave this Mac except to the service they belong to.';
+		}
+		// Windows trays can't show text, so there it's the hover tooltip.
+		if ('darwin' !== app.getState().platform) {
+			els.general.querySelector('.js-menu-bar-label').textContent = 'Tray icon tooltip shows';
+			els.general.querySelector('.js-menu-bar-hint').textContent = 'Shown when you hover over the tray icon. Right-click it for the next meeting, Spotify and Claude all together. The source you pick keeps checking while the dashboard is closed.';
+		}
 		const alerts = s.alerts || {};
 		els.general.alertUptime.checked = false !== alerts.uptime;
 		els.general.alertTickets.checked = false !== alerts.tickets;
@@ -41,6 +95,8 @@
 			app.setState(await window.dashboard.saveSettings({
 				startWithWindows: els.general.startWithWindows.checked,
 				closeToTray: els.general.closeToTray.checked,
+				linkApp: els.general.linkApp.value === CHOOSE ? '' : els.general.linkApp.value,
+				menuBar: els.general.menuBar.value,
 				alerts: {
 					uptime: els.general.alertUptime.checked,
 					tickets: els.general.alertTickets.checked,
@@ -172,6 +228,23 @@
 			return h('label', { class: 'check' }, h('input', { type: 'checkbox', name: field.key, id, checked }), field.label);
 		}
 
+		if ('select' === field.type) {
+			const current = value || field.default || '';
+			return h('label', { class: 'field', for: id },
+				h('span', { class: 'field__label' }, field.label),
+				h('select', { name: field.key, id },
+					field.options.map((o) => h('option', { value: o.value, selected: o.value === current }, o.label))
+				)
+			);
+		}
+
+		if ('app' === field.type) {
+			return h('label', { class: 'field', for: id },
+				h('span', { class: 'field__label' }, field.label),
+				appSelect({ name: field.key, id }, value || '', 'Same as Settings → General')
+			);
+		}
+
 		// A colour picker always has a value, so track whether it's really
 		// been chosen (data-set); unset means "use the service's colour".
 		if ('color' === field.type) {
@@ -218,6 +291,11 @@
 	function renderFields(account) {
 		const p = provider(els.form.provider.value);
 		els.help.textContent = p ? p.help : '';
+		// The README's setup steps for this type, collapsed until wanted.
+		const guide = p && p.guide;
+		els.guideWrap.hidden = !guide;
+		els.guideWrap.open = false;
+		els.guide.replaceChildren(guide ? window.BD.guide.render(guide) : '');
 		const fields = p ? p.fields : [];
 		els.fields.replaceChildren(...fields.filter((f) => !f.advanced && !f.appearance).map((f) => input(f, account)));
 		const advanced = fields.filter((f) => f.advanced);
@@ -263,6 +341,8 @@
 			}
 			if ('checkbox' === field.type) {
 				values[field.key] = el.checked;
+			} else if ('app' === field.type) {
+				values[field.key] = CHOOSE === el.value ? '' : el.value;
 			} else if ('color' === field.type) {
 				values[field.key] = el.dataset.set ? el.value : '';
 			} else {
@@ -311,6 +391,9 @@
 		els.form = document.getElementById('account-form');
 		els.formTitle = document.querySelector('.js-form-title');
 		els.help = els.form.querySelector('.js-provider-help');
+		els.guideWrap = els.form.querySelector('.js-guide-wrap');
+		els.guide = els.form.querySelector('.js-guide');
+		els.linkApp = document.getElementById('general-link-app-wrap');
 		els.fields = els.form.querySelector('.js-fields');
 		els.advanced = els.form.querySelector('.js-advanced');
 		els.advancedWrap = els.form.querySelector('.js-advanced-wrap');

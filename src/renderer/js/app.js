@@ -6,7 +6,7 @@
 	'use strict';
 
 	const { h, clockTime } = window.BD;
-	const { SECTIONS, META, render, upNext } = window.BD.cards;
+	const { SECTIONS, META, CALENDARS, render, upNext } = window.BD.cards;
 
 	let state = null;
 	const cards = new Map(); // account id → latest snapshot
@@ -34,7 +34,7 @@
 	}
 
 	function calendarAccounts() {
-		return visible().filter((a) => 'ics' === a.provider || ('outlook' === a.provider && a.config.show_calendar !== false));
+		return visible().filter((a) => CALENDARS.includes(a.provider) && ('outlook' !== a.provider || a.config.show_calendar !== false));
 	}
 
 	/** Events listed under the headline, by the Up next card's height setting. */
@@ -183,7 +183,7 @@
 		}
 
 		// Calendar data feeds the Up next card.
-		if (upNextNode && ('ics' === account.provider || 'outlook' === account.provider)) {
+		if (upNextNode && CALENDARS.includes(account.provider)) {
 			const fresh = renderUpNext();
 			swap(upNextNode, fresh);
 			upNextNode = fresh;
@@ -298,6 +298,8 @@
 		renderDashboard();
 
 		window.dashboard.onCard(updateCard);
+		// Changed from the menu bar menu (e.g. what it shows).
+		window.dashboard.onSettings((next) => setState(next));
 		window.dashboard.onClawd(({ id, activity }) => {
 			state.clawd = { ...(state.clawd || {}), [id]: activity };
 			if (window.BD.clawd) {

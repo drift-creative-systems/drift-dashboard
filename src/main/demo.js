@@ -11,6 +11,7 @@ const iso = (offset) => new Date(now() + offset).toISOString();
 const accounts = [
 	{ id: 'demo-ics-1', provider: 'ics', label: 'Gak Design', config: {} },
 	{ id: 'demo-ics-2', provider: 'ics', label: 'Personal', config: { icon: '🏠', icon_color: '#3fb97a' } },
+	{ id: 'demo-gcal', provider: 'gcal', label: 'Bonsai', config: { all_calendars: true } },
 	{ id: 'demo-spotify', provider: 'spotify', label: '', config: {} },
 	{ id: 'demo-plex', provider: 'plex', label: '', config: {} },
 	{ id: 'demo-claude', provider: 'claude', label: '', config: {} },
@@ -18,7 +19,7 @@ const accounts = [
 	{ id: 'demo-xbox', provider: 'xbox', label: '', config: {} },
 	{ id: 'demo-driftrecord', provider: 'driftrecord', label: '', config: {} },
 	{ id: 'demo-gmail-1', provider: 'gmail', label: 'Gak Design', config: {} },
-	{ id: 'demo-gmail-2', provider: 'gmail', label: 'Bonsai', config: { icon: 'B', icon_color: '#4f9dff' } },
+	{ id: 'demo-gmail-2', provider: 'gmail', label: 'Bonsai', config: { icon: 'B', icon_color: '#4f9dff', show: 'important' } },
 	{ id: 'demo-outlook', provider: 'outlook', label: 'Outlook', config: { show_calendar: true } },
 	{ id: 'demo-proton', provider: 'proton', label: 'Proton', config: {} },
 	{ id: 'demo-slack-1', provider: 'slack', label: 'Bonsai', config: {} },
@@ -66,7 +67,7 @@ function data(account) {
 	switch (account.id) {
 		case 'demo-ics-1':
 			return { events: [
-				{ title: 'Client call: homepage review', start: iso(25 * MIN), end: iso(85 * MIN), allDay: false, location: 'Google Meet', url: 'https://calendar.google.com/' },
+				{ title: 'Client call: homepage review', start: iso(25 * MIN), end: iso(85 * MIN), allDay: false, location: 'Google Meet', url: 'https://calendar.google.com/', meetingUrl: 'https://meet.google.com/abc-defg-hij' },
 				{ title: 'Sprint planning', start: iso(26 * HOUR), end: iso(27 * HOUR), allDay: false, location: '', url: 'https://calendar.google.com/' },
 			] };
 		case 'demo-ics-2':
@@ -116,7 +117,14 @@ function data(account) {
 		case 'demo-gmail-1':
 			return mail('ben@gakdesign.co.uk', 4, [['Sarah at Realityhouse', 'Re: Launch date for the new site', 8 * MIN, true], ['Google Search Console', 'New coverage issue detected', 2 * HOUR, true], ['WP Engine', 'Your monthly usage report', 26 * HOUR, false]]);
 		case 'demo-gmail-2':
-			return mail('hello@bonsaidigitalcollective.co.uk', 0, [['Web Heads', 'Invoice paid, thank you', 3 * HOUR, false]]);
+			return { ...mail('hello@bonsaidigitalcollective.co.uk', 1, [['Web Heads', 'Contract for sign-off', 3 * HOUR, true]]), important: true };
+		case 'demo-gcal':
+			return { email: 'ben@bonsaidigitalcollective.co.uk', events: [
+				{ title: 'Pitch: Collyer Bristow', start: iso(2 * HOUR), end: iso(3 * HOUR), allDay: false, location: 'Zoom', url: 'https://calendar.google.com/', colour: '#d50000', calendarColour: '#039be5', calendar: '' },
+				{ title: 'Invoice run', start: iso(28 * HOUR), end: iso(29 * HOUR), allDay: false, location: '', url: 'https://calendar.google.com/', colour: '#f6bf26', calendarColour: '#039be5', calendar: '' },
+				{ title: 'Studio day', start: iso(50 * HOUR), end: iso(58 * HOUR), allDay: false, location: 'Exeter', url: 'https://calendar.google.com/', colour: null, calendarColour: '#039be5', calendar: '' },
+				{ title: 'Server maintenance window', start: iso(74 * HOUR), end: iso(76 * HOUR), allDay: false, location: '', url: 'https://calendar.google.com/', colour: null, calendarColour: '#8e24aa', calendar: 'Ops' },
+			] };
 		case 'demo-outlook':
 			return { ...mail('ben@outlook.com', 1, [['Microsoft account team', 'Security info was added', 40 * MIN, true]]), events: [
 				{ title: 'Dentist', start: iso(3 * 24 * HOUR), end: iso(3 * 24 * HOUR + HOUR), allDay: false, location: 'Exeter', url: 'https://outlook.live.com/calendar/' },

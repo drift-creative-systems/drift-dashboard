@@ -130,8 +130,10 @@
 			return `In ${Math.max(1, Math.round(diff / MINUTE))} min`;
 		}
 		if (!ev.allDay && diff < 6 * HOUR && sameDay(start, now)) {
-			const hours = Math.floor(diff / HOUR);
-			const mins = Math.round((diff % HOUR) / MINUTE);
+			// Round once, so 1 h 59.6 min shows as 2 h 0 min, not 1 h 60 min.
+			const total = Math.round(diff / MINUTE);
+			const hours = Math.floor(total / 60);
+			const mins = total % 60;
 			return `In ${hours} h ${mins} min · ${clockTime(start)}`;
 		}
 		return `${dayLabel(start)} · ${ev.allDay ? 'all day' : clockTime(start)}`;

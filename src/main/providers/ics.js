@@ -5,6 +5,7 @@
  */
 const ical = require('node-ical');
 const { request } = require('../http');
+const meetings = require('../meetings');
 
 const DAYS_AHEAD = 14;
 const MAX_EVENTS = 5;
@@ -14,6 +15,16 @@ function text(value) {
 		return String(value.val);
 	}
 	return value ? String(value) : '';
+}
+
+/**
+ * An event's own colour, where the calendar app includes one (the iCal
+ * COLOR property, e.g. Fastmail and Apple). Google's iCal links don't:
+ * use the "Google Calendar (sign-in)" card for those.
+ */
+function colour(item) {
+	const value = text(item && item.color).trim().toLowerCase();
+	return /^#[0-9a-f]{6}$/.test(value) || /^[a-z]{3,20}$/.test(value) ? value : null;
 }
 
 module.exports = {
@@ -81,6 +92,14 @@ module.exports = {
 					allDay: Boolean(inst.isFullDay),
 					location: text(inst.event && inst.event.location),
 					url: openUrl,
+					colour: colour(inst.event || item),
+					// Google adds X-GOOGLE-CONFERENCE and a "Join with Google Meet" line.
+					meetingUrl: meetings.find(
+						text(item['GOOGLE-CONFERENCE'] || item['x-google-conference']),
+						text(inst.event && inst.event.location),
+						text(inst.event && inst.event.description),
+						text(item.url)
+					),
 				});
 			}
 		}

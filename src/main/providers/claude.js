@@ -1,15 +1,30 @@
 /**
  * Claude plan usage: how much of your Pro/Max session and weekly limits you've
  * used, the same figures as Claude Code's /usage. Reads the sign-in Claude Code
- * keeps on this PC (~/.claude/.credentials.json) and asks Claude's usage
- * service. That endpoint is the one Claude Code uses; it isn't documented, so
- * it may change. The token stays in the main process and is never refreshed
- * here (that would rotate it and could sign Claude Code out).
+ * keeps on this computer and asks Claude's usage service. That endpoint is the
+ * one Claude Code uses; it isn't documented, so it may change. The token stays
+ * in the main process and is never refreshed here (that would rotate it and
+ * could sign Claude Code out).
+ *
+ * Where Claude Code keeps its sign-in:
+ *  - Windows and Linux: ~/.claude/.credentials.json (or CLAUDE_CONFIG_DIR).
+ *  - macOS: the login Keychain, as a password item named
+ *    "Claude Code-credentials" holding the same JSON. With CLAUDE_CONFIG_DIR
+ *    set, the name gets "-" + the first 8 hex characters of the SHA-256 of
+ *    that folder's path. Read with Apple's `security` tool, which Claude Code
+ *    uses itself, so macOS normally doesn't ask. The file is the fallback.
  */
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const crypto = require('crypto');
+const { execFile } = require('child_process');
 const { request } = require('../http');
+
+const MAC = 'darwin' === process.platform;
+const KEYCHAIN_SERVICE = 'Claude Code-credentials';
+const SECURITY = '/usr/bin/security';
+const KEYCHAINS = path.join(os.homedir(), 'Library', 'Keychains');
 
 const SERVICE = 'Claude';
 const API = 'https://api.anthropic.com/api/oauth/usage';
@@ -42,21 +57,120 @@ function root(custom) {
 	return list.find((dir) => fs.existsSync(dir)) || list[0];
 }
 
+/** Run Apple's `security` tool; resolves to stdout, or null if the item isn't there. */
+function security(args) {
+	return new Promise((resolve, reject) => {
+		execFile(SECURITY, args, { timeout: 10000, maxBuffer: 4 * 1024 * 1024 }, (err, stdout, stderr) => {
+			if (!err) {
+				resolve(String(stdout));
+			} else if (44 === err.code) {
+				resolve(null); // errSecItemNotFound
+			} else {
+				const text = String(stderr || err.message);
+				const e = new Error(/user interaction is not allowed|interaction not allowed|-25308/i.test(text)
+					? 'Your Mac’s keychain is locked. Unlock your Mac and the card will retry.'
+					: /denied|-128|cancel/i.test(text)
+						? 'Access to Claude Code’s sign-in in the keychain was refused. Click ↻ and choose Always Allow when macOS asks.'
+						: `Couldn’t read Claude Code’s sign-in from the keychain (${text.trim().split('\n')[0]}).`);
+				e.keychain = true;
+				reject(e);
+			}
+		});
+	});
+}
+
+/** Keychain item names to try first: the CLAUDE_CONFIG_DIR one (if any), then the default. */
+function keychainServices(custom) {
+	const names = [];
+	const text = String(custom || '').trim();
+	const dirs = text
+		? [text.replace(/^~(?=$|[\\/])/, os.homedir())]
+		: String(process.env.CLAUDE_CONFIG_DIR || '').split(',').map((d) => d.trim()).filter(Boolean);
+	for (const dir of dirs) {
+		names.push(`${KEYCHAIN_SERVICE}-${crypto.createHash('sha256').update(dir).digest('hex').slice(0, 8)}`);
+	}
+	names.push(KEYCHAIN_SERVICE);
+	return [...new Set(names)];
+}
+
+/** Every "Claude Code-credentials…" item in the keychain (names only, no secrets). */
+async function keychainAllServices() {
+	const dump = await security(['dump-keychain']).catch(() => null);
+	const found = new Set();
+	for (const m of String(dump || '').matchAll(/"svce"<blob>="(Claude Code-credentials(?:-[0-9a-f]{8})?)"/g)) {
+		found.add(m[1]);
+	}
+	return [...found];
+}
+
+function parseOauth(text) {
+	try {
+		const data = JSON.parse(String(text || '').trim());
+		return (data && data.claudeAiOauth) || null;
+	} catch {
+		return null;
+	}
+}
+
 /**
- * Claude Code's sign-in: { accessToken, expiresAt, subscriptionType }.
+ * macOS: the sign-in from the keychain. Tries the expected item names, and
+ * if none holds a current sign-in, any other Claude Code item (some installs
+ * collect several), keeping the one that expires last. Null if there are none.
  */
-function signIn(custom) {
+async function keychainSignIn(custom) {
+	const user = process.env.USER || os.userInfo().username;
+	const read = async (service) => {
+		const withUser = await security(['find-generic-password', '-s', service, '-a', user, '-w']);
+		return parseOauth(null !== withUser ? withUser : await security(['find-generic-password', '-s', service, '-w']));
+	};
+	const best = (list) => list.filter((o) => o && o.accessToken)
+		.sort((a, b) => (Number(b.expiresAt) || 0) - (Number(a.expiresAt) || 0))[0] || null;
+	const current = (o) => o && (!o.expiresAt || Date.now() < o.expiresAt);
+
+	const tried = keychainServices(custom);
+	const found = [];
+	for (const service of tried) {
+		const oauth = await read(service);
+		if (current(oauth)) {
+			return oauth;
+		}
+		found.push(oauth);
+	}
+	const others = (await keychainAllServices()).filter((s) => !tried.includes(s)).slice(0, 10);
+	for (const service of others) {
+		found.push(await read(service));
+	}
+	return best(found) || (found.some(Boolean) ? found.find(Boolean) : null);
+}
+
+/** Windows/Linux (and the macOS fallback): ~/.claude/.credentials.json. */
+function fileSignIn(custom) {
 	const files = roots(custom).map((dir) => path.join(dir, '.credentials.json'));
 	const file = files.find((f) => fs.existsSync(f));
 	if (!file) {
-		throw new Error(`Couldn't find Claude Code's sign-in at ${files.join(' or ')}. Sign in to Claude Code on this PC first.`);
+		return { missing: files };
 	}
-	let oauth;
 	try {
-		oauth = JSON.parse(fs.readFileSync(file, 'utf8')).claudeAiOauth;
+		return { oauth: JSON.parse(fs.readFileSync(file, 'utf8')).claudeAiOauth || {} };
 	} catch (err) {
 		console.error('[claude] Couldn\'t read the credentials file:', err.message);
 		throw new Error('Couldn\'t read Claude Code\'s sign-in file.');
+	}
+}
+
+/**
+ * Claude Code's sign-in: { accessToken, expiresAt, subscriptionType }.
+ */
+async function signIn(custom) {
+	let oauth = MAC ? await keychainSignIn(custom) : null;
+	if (!oauth) {
+		const file = fileSignIn(custom);
+		if (file.missing) {
+			throw new Error(MAC
+				? 'Couldn’t find Claude Code’s sign-in in your keychain. Run `claude` in Terminal and sign in with /login, then click ↻.'
+				: `Couldn't find Claude Code's sign-in at ${file.missing.join(' or ')}. Sign in to Claude Code on this computer first.`);
+		}
+		oauth = file.oauth;
 	}
 	if (!oauth || !oauth.accessToken) {
 		throw new Error('Claude Code is signed in with an API key, not a Claude plan, so there are no plan limits to show.');
@@ -120,7 +234,7 @@ module.exports = {
 	section: 'now',
 	interval: 5 * 60 * 1000, // Undocumented endpoint, so check gently.
 	oauth: false,
-	help: 'Uses the Claude sign-in from Claude Code on this PC, so sign in to Claude Code first. Leave the folder blank unless you moved Claude Code\'s settings folder.',
+	help: 'Uses the Claude sign-in from Claude Code on this computer (the Keychain on a Mac), so sign in to Claude Code first. Leave the folder blank unless you moved Claude Code\'s settings folder.',
 	fields: [
 		{ key: 'folder', label: 'Claude settings folder', type: 'text', placeholder: '~/.claude' },
 	],
@@ -130,11 +244,16 @@ module.exports = {
 	 * recovers straight away instead of on its next check. Returns a stop function.
 	 */
 	watch(account, changed) {
-		const watchers = roots(account.config.folder).filter((dir) => fs.existsSync(dir)).flatMap((dir) => {
+		// On a Mac, Claude Code saves a renewed sign-in to the login keychain file.
+		const targets = roots(account.config.folder).map((dir) => [dir, '.credentials.json']);
+		if (MAC) {
+			targets.push([KEYCHAINS, 'login.keychain-db']);
+		}
+		const watchers = targets.filter(([dir]) => fs.existsSync(dir)).flatMap(([dir, name]) => {
 			try {
 				const watcher = fs.watch(dir, (event, file) => {
 					// Some platforms don't report the name; treat that as a possible change.
-					if (!file || '.credentials.json' === String(file)) {
+					if (!file || name === String(file)) {
 						changed();
 					}
 				});
@@ -149,7 +268,7 @@ module.exports = {
 	},
 
 	async fetch(account) {
-		const oauth = signIn(account.config.folder);
+		const oauth = await signIn(account.config.folder);
 
 		let response;
 		try {
