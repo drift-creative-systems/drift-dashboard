@@ -1,6 +1,6 @@
 # Bonsai Dashboard
 
-A Windows desktop app that shows everything at a glance, so you don't have to open Shift and click through accounts:
+A desktop app for Windows and macOS that shows everything at a glance, so you don't have to open Shift and click through accounts:
 
 | Section | What it shows |
 |---|---|
@@ -19,7 +19,7 @@ A Windows desktop app that shows everything at a glance, so you don't have to op
 | **Support & uptime** | Support Desk tickets per site (open counts, mine, unassigned, SLA missed, latest) + Bonsai Uptime Monitor (sites down, SSL/domain expiring, recent incidents) |
 | **GitHub** | One card per account: latest repo activity + failed Actions runs |
 
-Click any email, message, task, event or ticket to open it in your browser (Slack opens in the Slack app).
+Click any email, message, task, event or ticket to open it in your browser, or in an app you choose (see [Opening links in a particular app](#opening-links-in-a-particular-app)). Slack opens in the Slack app.
 
 It's a normal window (not always on top). Closing it keeps it in the system tray; right-click the tray icon to quit. While the window is hidden or minimised it stops checking, then catches up when you open it.
 
@@ -72,9 +72,26 @@ This creates `dist\Bonsai Dashboard Setup <version>.exe` (e.g. `1.1.0`). Release
 
 Your accounts are stored per Windows user (see [Where your data lives](#where-your-data-lives)), so the installed app and `npm start` share the same accounts.
 
+### 6. On a Mac: build it as an app
+
+Steps 1–4 work on a Mac too, using **Terminal** instead of PowerShell (and your own folder path, e.g. `cd ~/Code/bonsai-desktop-dashboard`). To use it like any other Mac app, with an icon in Applications and the Dock, build it once:
+
+```
+npm run mac
+```
+
+This builds `Bonsai Dashboard.app` for your Mac's chip, signs it for this Mac only, and copies it to **Applications**, replacing any older copy. Quit the dashboard first (menu bar icon → **Quit**). The script stops if it's still running. Then open it from Applications or Spotlight.
+
+- **Your accounts carry over.** They're kept in `~/Library/Application Support/Bonsai Dashboard`, not in the app, and `npm start` uses the same folder.
+- **Keychain prompt:** the first time (and after each rebuild), macOS may ask to let Bonsai Dashboard use **"Bonsai Dashboard Safe Storage"**. That's the key your saved passwords are encrypted with. Enter your Mac password and click **Always Allow**. If you click Deny, cards that need a password or token will say they aren't set up.
+- **Open at login:** tick it in Settings → General. The app then starts in the menu bar without opening the window.
+- **Updating:** the Mac app doesn't update itself, because macOS only allows that for apps signed with a paid Apple Developer ID. Pull the latest code and run `npm run mac` again.
+- This build is for your own Mac. Sending it to someone else would need Apple Developer ID signing and notarisation, or they'd have to get past Gatekeeper's warnings.
+- `npm run mac -- --no-install` builds it into `dist/` without installing it.
+
 ### Updates
 
-From version 1.1.0 the installed app updates itself. It checks when it opens and every 6 hours, downloads new versions in the background, then shows **"Bonsai Dashboard 1.x.x is ready" → Restart to update**. Choose **Later** and it installs the next time you quit. **Settings → Updates → Check for updates** checks straight away.
+From version 1.1.0 the installed Windows app updates itself (the Mac app doesn't; see step 6). It checks when it opens and every 6 hours, downloads new versions in the background, then shows **"Bonsai Dashboard 1.x.x is ready" → Restart to update**. Choose **Later** and it installs the next time you quit. **Settings → Updates → Check for updates** checks straight away.
 
 > Version 1.0.0 has no updater: install 1.1.0 by hand once from the [releases page](https://github.com/drift-creative-systems/bonsai-dashboard-releases/releases/latest). Your accounts and layout are kept.
 
@@ -84,7 +101,9 @@ From version 1.1.0 the installed app updates itself. It checks when it opens and
 
 Everything is added in **Settings → Add an account**: pick the **Type**, give it a **Card name** (e.g. "Gak Design" or "Bonsai"), fill the fields, then **Save**. Each one turns into a card.
 
-Sign-in services (Outlook, Spotify, Strava) open your browser to log in as soon as you save. Approve it, close the tab, and the card fills in.
+The steps below are also in the app: open **How to set this up** under the Type when you add or edit an account. The app reads them from this README, so there's only one copy to keep up to date.
+
+Sign-in services (Outlook, Google Calendar with colours, Spotify, Strava) open your browser to log in as soon as you save. Approve it, close the tab, and the card fills in.
 
 Suggested order: start with the quick ones (Weather, ClickUp, calendars, Xbox, Plex), then email, Slack, Outlook, GitHub, FreeAgent, Spotify and Strava. Support tickets and the uptime monitor need their server updates deployed first.
 
@@ -102,6 +121,12 @@ For **each** Gmail account:
 4. Copy the 16-letter password (spaces don't matter).
 5. In the dashboard: **Type: Gmail**, enter the email address and paste the app password. **Save**.
 
+**Which emails the card lists** (the **Show** option):
+
+- **Unread emails** (the default): the latest 3 unread, and the unread count.
+- **Important and unread emails**: only unread emails Gmail has marked **Important** (the yellow marker). The count is of those too. It uses Gmail's own search, so it matches `is:important is:unread` in Gmail.
+- **Latest emails, read or not**: the latest 3 in the inbox.
+
 **Google Workspace accounts** (your own domains): if the app passwords page says "not available", the Workspace admin has to allow it. Go to [admin.google.com](https://admin.google.com) → Security → Authentication → 2-Step Verification → allow users to turn it on. Also check Apps → Google Workspace → Gmail → End User Access → **IMAP access** is on.
 
 ### Google calendars (×7)
@@ -117,9 +142,41 @@ For each account:
 
 Events from every calendar are merged into the **Up next** card, colour-coded by calendar. Google updates these links every few hours at most, so a brand-new event can take a while to appear.
 
+Google's iCal links don't include the colours you give events. To see those, use [Google Calendar with event colours](#google-calendar-with-event-colours-optional-instead-of-the-ical-link) instead.
+
 > **Workspace:** if "Secret address" is missing, the admin has to allow it under Apps → Google Workspace → Calendar → Sharing settings → External sharing options → "Share all information".
 
 > Anyone with that link can see your calendar, which is why the dashboard stores it encrypted. If it ever leaks, click **Reset** next to it in Google Calendar.
+
+### Google Calendar with event colours (optional, instead of the iCal link)
+
+This card signs in to Google Calendar, so Up next shows each event in the colour you gave it in Google Calendar (Tomato, Banana, Peacock and so on). Events without their own colour use the calendar's colour. New events also appear within 5 minutes instead of hours. It needs a free Google Cloud "OAuth client", made once (about 10 minutes), which then works for all your Google accounts.
+
+**Once: create the OAuth client**
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com), sign in with any of your Google accounts, and create a project called `Bonsai Dashboard`.
+2. Open [the Google Calendar API page](https://console.cloud.google.com/apis/library/calendar-json.googleapis.com) and click **Enable**.
+3. Open **Google Auth Platform** (APIs & Services → OAuth consent screen) → **Get started**:
+   - App name: `Bonsai Dashboard`, support email: yours.
+   - Audience: **External** (so it works for every account, not only that one's Workspace).
+   - Contact email: yours. Agree and **Create**.
+4. **Audience** → **Publish app** → Confirm. This matters: while the app is in **Testing**, Google signs it out every 7 days. You don't need Google to verify it; it's only for you.
+5. **Clients** → **Create client** → Application type **Desktop app**, name `Bonsai Dashboard` → **Create**. Copy the **Client ID** and **Client secret** straight away (Google may only show the secret once).
+
+**For each Google account:**
+
+1. In the dashboard: **Type: Google Calendar (sign-in, with colours)**, Card name e.g. "Gak Design", paste the client ID and secret. **Save**.
+2. Your browser opens. Choose the account. Google warns **"Google hasn't verified this app"**: click **Advanced → Go to Bonsai Dashboard (unsafe)**. It's your own app, asking only to *view* your calendars. Then **Continue**.
+
+To show other calendars you've ticked in Google Calendar as well (shared or team calendars), tick **Also include the other calendars ticked in Google Calendar**. Their name appears after the card name in Up next.
+
+Remove the iCal card for an account once its sign-in card works, or its events show twice.
+
+Colours: an event's own colour comes first, then the card's **Icon colour** if you've set one, then the calendar's colour in Google.
+
+> **Workspace accounts:** if sign-in says the app is blocked, the admin has to trust it: [admin.google.com](https://admin.google.com) → Security → Access and data control → API controls → Manage third-party app access → add the client ID and set it to **Trusted** (or allow unconfigured apps).
+
+> The client secret isn't really secret for desktop apps (Google says so), but it's stored encrypted like everything else.
 
 ### Outlook (×1), email and calendar
 
@@ -234,8 +291,9 @@ The token is your Plex account's sign-in token, so treat it like a password. It'
 
 Nothing to set up beyond Claude Code itself. The card shows the same figures as Claude Code's `/usage`: how much of your Pro or Max plan's limits you've used.
 
-1. Make sure you're signed in to Claude Code on this PC with your Claude account (run `claude`, then `/login` if needed).
+1. Make sure you're signed in to Claude Code on this computer with your Claude account: open Terminal (Mac) or PowerShell (Windows), run `claude`, then `/login` if it asks. Signing in to the Claude desktop app isn't enough; it has to be Claude Code.
 2. In the dashboard: **Type: Claude plan usage**. Leave **Claude settings folder** blank unless you've moved it (or set `CLAUDE_CONFIG_DIR`, which the card also respects). **Save**.
+3. **Mac only:** the first time, macOS may ask whether to let the dashboard use "Claude Code-credentials" from your keychain. Enter your Mac password and click **Always Allow**. (Usually it doesn't ask, because the dashboard reads it the same way Claude Code does.)
 
 The card checks every 5 minutes and shows:
 
@@ -244,13 +302,23 @@ The card checks every 5 minutes and shows:
 - Bars turn amber from 75% and red from 90% (or when Claude flags the limit).
 - **Extra usage**: credits used once you've hit a limit, if you've switched that on.
 - **This week by app**: how this week's usage splits between Claude Code, chats, Cowork and so on.
-- **Clawd**: the pixel crab from Claude Code's welcome screen, in a strip across the top of the card. His mood follows the current session: he wanders and follows your mouse, dozes if the card's been ignored for 10 minutes, sweats from 90%, lies belly-up at 100%, burrows into the sand while the card has an error, and celebrates when the session resets. Click him for a random Claude Code animation. With Windows' reduced motion on, he only moves when clicked. Ported from [clawd-usage-winwidget](https://github.com/Enhed/clawd-usage-winwidget) by Venger Sergey (MIT licence). Clawd and Claude are Anthropic's.
+- **Clawd**: the pixel crab from Claude Code's welcome screen, in a strip across the top of the card. His mood follows the current session: he wanders and follows your mouse, dozes if the card's been ignored for 10 minutes, sweats from 90%, lies belly-up at 100%, burrows into the sand while the card has an error, and celebrates when the session resets. Click him for a random Claude Code animation. With reduced motion on (Mac: System Settings → Accessibility → Display → Reduce motion; Windows: Settings → Accessibility → Visual effects → Animation effects off), he only moves when clicked. Ported from [clawd-usage-winwidget](https://github.com/Enhed/clawd-usage-winwidget) by Venger Sergey (MIT licence). Clawd and Claude are Anthropic's.
 
-How it works: the card reads the sign-in Claude Code saves in `%USERPROFILE%\.claude\.credentials.json` and asks Claude's usage service, the same one `/usage` uses. The token stays in the app's background process and never reaches the window. The card never renews the sign-in itself, because that would sign Claude Code out. If it's expired (when Claude Code hasn't been used for a few hours), the card asks you to open Claude Code, and updates within a few seconds of Claude Code renewing it.
+How it works: the card reads the sign-in Claude Code saves and asks Claude's usage service, the same one `/usage` uses. Where that sign-in lives depends on the computer:
+
+- **Mac:** in your login keychain, as an item called `Claude Code-credentials` (you can see it in the Keychain Access app). If you've set `CLAUDE_CONFIG_DIR`, Claude Code adds a short code to the name (e.g. `Claude Code-credentials-1a2b3c4d`), and the card works that out from the folder. If it can't find a current sign-in under the expected names, it looks through any other `Claude Code-credentials-…` items and uses the newest. It reads them with Apple's `security` tool, the same way Claude Code does.
+- **Windows:** `%USERPROFILE%\.claude\.credentials.json`.
+
+To check the Mac part yourself, run this in Terminal. It should print `found` and nothing secret:
+
+```
+security find-generic-password -s "Claude Code-credentials" >/dev/null && echo found
+```
+ The token stays in the app's background process and never reaches the window. The card never renews the sign-in itself, because that would sign Claude Code out. If it's expired (when Claude Code hasn't been used for a few hours), the card asks you to open Claude Code, and updates within a few seconds of Claude Code renewing it (on a Mac it notices the keychain changing).
 
 That usage service isn't publicly documented, so Anthropic could change it. If the card shows "the dashboard needs an update", that's what happened.
 
-**Connect Clawd to Claude Code (optional).** In Settings, the Claude card has a **Connect Clawd** button. It adds a few hooks to Claude Code's `settings.json` (after saving a copy as `settings.json.bonsai-backup`), and then Clawd shows what Claude Code is doing. He hunches over typing ("…") while it works, puts his arms up ("?") when it's waiting for you to approve something, and waves when it finishes. New Claude Code sessions pick up the hooks. Each hook just writes one word to `bonsai-dashboard-clawd` in the same folder, which the dashboard watches. If you run several sessions at once, the latest event wins, and anything older than 15 minutes is ignored. The plan-limit moods still come first, so at 100% he stays belly-up. **Disconnect Clawd** removes only the dashboard's hooks and leaves any of your own alone.
+**Connect Clawd to Claude Code (optional).** In Settings, the Claude card has a **Connect Clawd** button. It adds a few hooks to Claude Code's `settings.json` (`~/.claude/settings.json` on a Mac, `%USERPROFILE%\.claude\settings.json` on Windows), after saving a copy as `settings.json.bonsai-backup`, and then Clawd shows what Claude Code is doing. He hunches over typing ("…") while it works, puts his arms up ("?") when it's waiting for you to approve something, and waves when it finishes. New Claude Code sessions pick up the hooks. Each hook just writes one word to `bonsai-dashboard-clawd` in the same folder, which the dashboard watches. If you run several sessions at once, the latest event wins, and anything older than 15 minutes is ignored. The plan-limit moods still come first, so at 100% he stays belly-up. **Disconnect Clawd** removes only the dashboard's hooks and leaves any of your own alone.
 
 ### Strava
 
@@ -382,6 +450,38 @@ Your layout is saved straight away and kept between restarts. New cards go into 
 
 Hover a card and click **✕** in its top-right corner to hide it. Hidden cards aren't checked at all and don't raise alerts, but the account and its settings are kept. To bring one back, go to Settings: it's marked **Hidden** in the account list, with a **Show** button. Every account there also has a **Hide** button.
 
+## Opening links in a particular app
+
+By default links open in your default browser. To use a different app, go to **Settings → General → Open links with** and pick one of the browsers found on this computer, or **Choose another app…** to pick any app (on a Mac, from Applications; on Windows, its `.exe`). **Save**.
+
+Each card can override that: **Settings → Edit → Advanced → Open this card's links with**. For example, open one Gmail card's emails in Chrome and everything else in Safari. **Same as Settings → General** uses the general choice. Up next events use the setting of the calendar card they came from.
+
+Slack links (`slack://`) always open in the Slack app. If a chosen app is uninstalled, links go back to the default browser and the menu shows it as "(not found)".
+
+## Menu bar: next meeting, Spotify or Claude
+
+On a Mac, the dashboard's icon in the menu bar can show a short line of text beside it. Choose what in **Settings → General → Menu bar shows** (or click the icon → **Show in menu bar**):
+
+- **Next meeting**: the next timed event from any calendar card, e.g. `Client call · in 25m`, then its start time once it's more than 2 hours away. `now` while it's on. Nothing if there's nothing in the next 12 hours. All-day events are left out.
+- **Spotify**: the track playing, e.g. `♫ Teardrop – Massive Attack`. Nothing when paused.
+- **Claude usage**: `Claude 64% · wk 81%` (current session · weekly).
+- **Just the icon** (the default).
+
+Click the icon for all three at once, whichever you picked:
+
+- The next meeting with **Join meeting** (Google Meet, Zoom, Teams, Webex and similar links, taken from the event's video call details, location or notes) and **Open in calendar**, plus the next few under **Later**.
+- What's playing on Spotify (click to open it).
+- Claude's limits and when they reset.
+- **Open dashboard**, **Refresh everything** and **Quit**.
+
+The Up next card on the dashboard also gets a **Join** button when the next event has a meeting link.
+
+Whatever the menu bar shows keeps checking while the dashboard is closed: calendars every 5–10 minutes, Spotify every 15 seconds, Claude every 5 minutes. The menu shows the latest it has for the other two, which may be from when the dashboard was last open.
+
+On Windows, tray icons can't show text, so the same line appears when you hover over the tray icon, and right-click opens the menu.
+
+Meeting links work best with the **Google Calendar (sign-in)** and **Outlook** cards, which read the event's video call directly. iCal links find them in the event's details, which Google includes for Meet links.
+
 ## Desktop alerts
 
 Windows notifications for things that need you, even with the dashboard closed to the tray:
@@ -411,10 +511,14 @@ To start again from scratch, quit the app (tray → Quit) and delete `%APPDATA%\
 | Sign-in page says "redirect URI mismatch" | The redirect URI registered with the service must match exactly: `http://127.0.0.1:8890/callback` (Spotify), `http://localhost:8890/callback` (Microsoft), `http://localhost:8890/callback` (FreeAgent), callback domain `127.0.0.1` (Strava). |
 | GitHub card shows no failed runs, or "rejected the login" | Fine-grained tokens need **Actions: Read-only** to see runs, and expire on the date you chose. Make a new token and **Edit** the card. |
 | Uptime card: "Dashboard API not found" | Upload the new `api.php` and `settings.php` to the monitor, then create a key under Settings → Dashboard API. |
+| Claude card (Mac): "Couldn't find Claude Code's sign-in in your keychain" | Run `claude` in Terminal and `/login`. Check with `security find-generic-password -s "Claude Code-credentials" >/dev/null && echo found`. If you use `CLAUDE_CONFIG_DIR`, put the same folder in the card's **Claude settings folder**. |
+| Claude card (Mac): "keychain is locked" or "access was refused" | Unlock your Mac, then click ↻. If macOS asks about "Claude Code-credentials", choose **Always Allow**. |
 | Gmail "rejected the login" | Use an app password, not your normal password. For Workspace accounts, see the admin notes above. |
 | Proton "Bridge isn't running" | Start Proton Mail Bridge. |
 | Slack "missing a scope" | Update the app's scopes to match the manifest above, then **Reinstall to Workspace** and paste the new token. |
-| Calendar event missing | Google refreshes secret iCal links every few hours. Outlook calendars (via sign-in) are near-instant. |
+| Calendar event missing | Google refreshes secret iCal links every few hours. Outlook and Google Calendar sign-in cards are near-instant. |
+| Google Calendar "sign-in has expired" every week | The Google Cloud app is still in **Testing**. Google Auth Platform → Audience → **Publish app**, then **Reconnect** the card. |
+| Google sign-in: "Access blocked" or "redirect_uri_mismatch" | Make sure the OAuth client is a **Desktop app** (not "Web application"), and you used its own ID and secret. |
 | Started with Windows but nothing shows | It starts in the tray. Click the pink tray icon (it may be under the **^** arrow). |
 
 ## Development
@@ -423,8 +527,9 @@ To start again from scratch, quit the app (tray → Quit) and delete `%APPDATA%\
 npm start        # run the app
 npm run demo     # run with sample data (separate, throwaway settings)
 npm run check    # syntax-check every JS file
-npm run icons    # regenerate assets/icon.png and assets/tray.png
+npm run icons    # regenerate the app icon, the Windows tray icons and the macOS menu bar icons
 npm run dist     # build the Windows installer into dist\ (no upload)
+npm run mac      # Mac: build Bonsai Dashboard.app, sign it for this Mac and install it in Applications
 npm run release  # build and publish an update (see below)
 ```
 
@@ -463,6 +568,10 @@ src/main/            Electron main process (all network access + storage)
   alerts.js          desktop notifications: sites down, urgent tickets, Claude limits
   clawdhooks.js      adds/removes Clawd's Claude Code hooks, watches their state file
   oauth.js           browser sign-in on a loopback port (PKCE)
+  linkapps.js        finds browsers and opens links in the app you chose
+  menubar.js         menu bar text and menu: next meeting, Spotify, Claude
+  meetings.js        finds Meet/Zoom/Teams links in calendar events
+  guides.js          setup guides for Settings, read from this README
   http.js            fetch wrapper: timeouts + readable errors
   demo.js            sample data for `npm run demo`
   providers/         one file per service: fields, interval, fetch(), connect()
@@ -471,12 +580,15 @@ src/renderer/        the window: plain HTML/CSS/JS, no framework
   js/cards.js        one renderer per card type + Up next
   js/clawd.js        Clawd, the pixel mascot on the Claude card
   js/settings.js     settings screen, forms built from provider fields
+  js/guide.js        turns a README section into the "How to set this up" panel
   js/app.js          layout and live card updates
 ```
 
-**Adding a new card type:** create `src/main/providers/<name>.js` exporting `id`, `name`, `section`, `interval`, `fields`, `fetch()` (and `connect()` if it uses sign-in), register it in `providers/index.js`, then add a renderer and icon in `src/renderer/js/cards.js`. The settings form is built automatically from `fields`.
+**Adding a new card type:** create `src/main/providers/<name>.js` exporting `id`, `name`, `section`, `interval`, `fields`, `fetch()` (and `connect()` if it uses sign-in), register it in `providers/index.js`, then add a renderer and icon in `src/renderer/js/cards.js`. The settings form is built automatically from `fields`. For its in-app setup guide, add a `### ` section to Part 2 of this README and put its heading in the provider's `guide` (or `GUIDES` in `providers/index.js`).
 
-**Security model:** the window runs sandboxed with context isolation and a strict Content Security Policy. It can't reach Node, the file system or the network, and never sees passwords or tokens. All card text is inserted as text, never HTML. Links only open if they're `https:` or `slack:`.
+**Icons:** `npm run icons` draws them in code (`scripts/make-icons.js`), so they're easy to change: colours, corner radius and ring sizes are at the top of `mark()`. The macOS menu bar uses `trayTemplate.png` / `trayTemplate@2x.png` (black and transparent only, which macOS tints for light and dark menu bars); Windows uses the pink `tray.png` / `tray@2x.png`.
+
+**Security model:** the window runs sandboxed with context isolation and a strict Content Security Policy. It can't reach Node, the file system or the network, and never sees passwords or tokens. All card text is inserted as text, never HTML. Links only open if they're `https:` or `slack:`. If you've chosen an app for links, it's started directly with the link as its only argument (no shell), so nothing in a link can run as a command.
 
 ### Why not Docker?
 
