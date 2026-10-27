@@ -2,10 +2,10 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [1.11.0] - 2026-10-27
+## [2.0.0] - 2026-10-27
 
 ### Changed
-- Rebranded as **Drift Dashboard**, from Drift Creative Systems (was Bonsai Dashboard). The window title, tray/menu bar tooltip, installer, update bar and the device names shown to Plex, Drift: Record and WordPress all use the new name. The README has the Drift banner and is headed **Drift: Dashboard**.
+- Rebranded as **Drift Dashboard**, from Drift Creative Systems (was Bonsai Dashboard). The window title, tray/menu bar tooltip, installer, update bar and the device names shown to Plex, Drift: Record and WordPress all use the new name. The dashboard's header and the README are headed **Drift: Dashboard**, and the README has the Drift banner.
 - The source repo is now public, at [drift-creative-systems/drift-dashboard](https://github.com/drift-creative-systems/drift-dashboard). Releases still come from `bonsai-dashboard-releases`, so installed copies keep updating.
 - `npm run mac` also removes the old `Bonsai Dashboard.app` from Applications, and won't install while either copy is running.
 - New icons: the Drift D monogram in the master brand's monochrome. The app and installer icon is the brand pack's dark rounded square with a white D; the Windows tray uses the same mark, and the macOS menu bar a black D template. `npm run icons` draws them from the brand pack's vector paths.

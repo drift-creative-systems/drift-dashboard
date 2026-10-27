@@ -21,7 +21,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const NAME = 'Drift Dashboard';
-const OLD_NAME = 'Bonsai Dashboard'; // Before 1.11.0; removed from Applications on install.
+const OLD_NAME = 'Bonsai Dashboard'; // Before 2.0.0; removed from Applications on install.
 const INSTALL = !process.argv.includes('--no-install');
 
 if ('darwin' !== process.platform) {
@@ -59,7 +59,7 @@ if (!INSTALL) {
 	process.exit(0);
 }
 
-// 3. Install, but not over a running copy (or the pre-1.11 Bonsai one).
+// 3. Install, but not over a running copy (or the pre-2.0 Bonsai one).
 for (const name of [NAME, OLD_NAME]) {
 	if (spawnSync('/usr/bin/pgrep', ['-x', name]).status === 0) {
 		console.error(`\n${name} is running. Quit it (menu bar icon → Quit), then run npm run mac again.`);
