@@ -1,9 +1,9 @@
 /**
- * Builds Bonsai Dashboard as a Mac app and installs it in /Applications
+ * Builds Drift Dashboard as a Mac app and installs it in /Applications
  * (npm run mac). For your own Mac: it isn't signed with an Apple Developer
  * ID or notarised, so it isn't for sending to other people.
  *
- *   1. electron-builder makes "Bonsai Dashboard.app" in dist/ for this
+ *   1. electron-builder makes "Drift Dashboard.app" in dist/ for this
  *      Mac's chip (Apple silicon or Intel), without signing.
  *   2. It's signed "ad hoc" (codesign -s -), which Apple silicon needs
  *      before it will run anything.
@@ -11,7 +11,7 @@
  *      first; this stops if it's running.
  *
  * Your accounts aren't in the app: they stay in
- * ~/Library/Application Support/Bonsai Dashboard, shared with `npm start`.
+ * ~/Library/Application Support/Drift Dashboard, shared with `npm start`.
  *
  * Options: --no-install  build and sign only (the app stays in dist/).
  */
@@ -20,7 +20,8 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const NAME = 'Bonsai Dashboard';
+const NAME = 'Drift Dashboard';
+const OLD_NAME = 'Bonsai Dashboard'; // Before 1.11.0; removed from Applications on install.
 const INSTALL = !process.argv.includes('--no-install');
 
 if ('darwin' !== process.platform) {
@@ -58,20 +59,23 @@ if (!INSTALL) {
 	process.exit(0);
 }
 
-// 3. Install, but not over a running copy.
-const running = spawnSync('/usr/bin/pgrep', ['-x', NAME]).status === 0;
-if (running) {
-	console.error(`\n${NAME} is running. Quit it (menu bar icon → Quit), then run npm run mac again.`);
-	console.error(`The new build is ready in ${out} if you'd rather drag it to Applications yourself.`);
-	process.exit(1);
+// 3. Install, but not over a running copy (or the pre-1.11 Bonsai one).
+for (const name of [NAME, OLD_NAME]) {
+	if (spawnSync('/usr/bin/pgrep', ['-x', name]).status === 0) {
+		console.error(`\n${name} is running. Quit it (menu bar icon → Quit), then run npm run mac again.`);
+		console.error(`The new build is ready in ${out} if you'd rather drag it to Applications yourself.`);
+		process.exit(1);
+	}
 }
 const target = path.join('/Applications', `${NAME}.app`);
-if (fs.existsSync(target)) {
-	run('/bin/rm', ['-rf', target]);
+for (const app of [target, path.join('/Applications', `${OLD_NAME}.app`)]) {
+	if (fs.existsSync(app)) {
+		run('/bin/rm', ['-rf', app]);
+	}
 }
 run('/usr/bin/ditto', [out, target]);
 // Built here, so it shouldn't be quarantined, but make sure Gatekeeper won't block it.
 spawnSync('/usr/bin/xattr', ['-dr', 'com.apple.quarantine', target]);
 
 console.log(`\nInstalled ${target}. Open it from Applications or Spotlight.`);
-console.log('The first time, macOS may ask to let it use "Bonsai Dashboard Safe Storage" in your keychain: enter your password and click Always Allow.');
+console.log('The first time, macOS may ask to let it use "Drift Dashboard Safe Storage" in your keychain: enter your password and click Always Allow.');

@@ -1,6 +1,8 @@
-# Bonsai Dashboard
+![Drift Creative Systems](.github/banner.jpg)
 
-A desktop app for Windows and macOS that shows everything at a glance, so you don't have to open Shift and click through accounts:
+# Drift: Dashboard
+
+A desktop app for Windows and macOS from [Drift Creative Systems](https://driftcreativesystems.co.uk/) that shows everything at a glance, so you don't have to open Shift and click through accounts. The app itself is called **Drift Dashboard** (it was Bonsai Dashboard up to 1.10.0).
 
 | Section | What it shows |
 |---|---|
@@ -40,7 +42,7 @@ You should see `v20` or higher. If it says "not recognised", install the LTS ver
 ### 2. Install the app's packages
 
 ```powershell
-cd "D:\Gak Design\Web\Bonsai Plugins\bonsai-desktop-dashboard"
+cd "D:\Gak Design\Web\Drift\Drift Dashboard"
 npm install
 ```
 
@@ -66,7 +68,7 @@ You'll see "Nothing to show yet". Click **Settings** and add your accounts using
 npm run dist
 ```
 
-This creates `dist\Bonsai Dashboard Setup <version>.exe` (e.g. `1.1.0`). Released installers are also on the public [releases page](https://github.com/drift-creative-systems/bonsai-dashboard-releases/releases/latest), so anyone (e.g. the Realityhouse team) can download one there instead of building it. Run it to install the app like any other program, with a Start menu entry and a desktop shortcut. Then you can tick **Start with Windows** in Settings.
+This creates `dist\Drift Dashboard Setup <version>.exe` (e.g. `1.1.0`). Released installers are also on the public [releases page](https://github.com/drift-creative-systems/bonsai-dashboard-releases/releases/latest), so anyone (e.g. the Realityhouse team) can download one there instead of building it. Run it to install the app like any other program, with a Start menu entry and a desktop shortcut. Then you can tick **Start with Windows** in Settings.
 
 > Windows SmartScreen will warn you that the installer isn't signed. Click **More info → Run anyway**. Signing needs a paid code-signing certificate, which isn't worth it for an internal tool.
 
@@ -74,16 +76,16 @@ Your accounts are stored per Windows user (see [Where your data lives](#where-yo
 
 ### 6. On a Mac: build it as an app
 
-Steps 1–4 work on a Mac too, using **Terminal** instead of PowerShell (and your own folder path, e.g. `cd ~/Code/bonsai-desktop-dashboard`). To use it like any other Mac app, with an icon in Applications and the Dock, build it once:
+Steps 1–4 work on a Mac too, using **Terminal** instead of PowerShell (and your own folder path, e.g. `cd ~/Code/drift-dashboard`). To use it like any other Mac app, with an icon in Applications and the Dock, build it once:
 
 ```
 npm run mac
 ```
 
-This builds `Bonsai Dashboard.app` for your Mac's chip, signs it for this Mac only, and copies it to **Applications**, replacing any older copy. Quit the dashboard first (menu bar icon → **Quit**). The script stops if it's still running. Then open it from Applications or Spotlight.
+This builds `Drift Dashboard.app` for your Mac's chip, signs it for this Mac only, and copies it to **Applications**, replacing any older copy. Quit the dashboard first (menu bar icon → **Quit**). The script stops if it's still running. Then open it from Applications or Spotlight.
 
-- **Your accounts carry over.** They're kept in `~/Library/Application Support/Bonsai Dashboard`, not in the app, and `npm start` uses the same folder.
-- **Keychain prompt:** the first time (and after each rebuild), macOS may ask to let Bonsai Dashboard use **"Bonsai Dashboard Safe Storage"**. That's the key your saved passwords are encrypted with. Enter your Mac password and click **Always Allow**. If you click Deny, cards that need a password or token will say they aren't set up.
+- **Your accounts carry over.** They're kept in `~/Library/Application Support/Drift Dashboard`, not in the app, and `npm start` uses the same folder.
+- **Keychain prompt:** the first time (and after each rebuild), macOS may ask to let Drift Dashboard use **"Drift Dashboard Safe Storage"**. That's the key your saved passwords are encrypted with. Enter your Mac password and click **Always Allow**. If you click Deny, cards that need a password or token will say they aren't set up.
 - **Open at login:** tick it in Settings → General. The app then starts in the menu bar without opening the window.
 - **Updating:** the Mac app doesn't update itself, because macOS only allows that for apps signed with a paid Apple Developer ID. Pull the latest code and run `npm run mac` again.
 - This build is for your own Mac. Sending it to someone else would need Apple Developer ID signing and notarisation, or they'd have to get past Gatekeeper's warnings.
@@ -91,7 +93,7 @@ This builds `Bonsai Dashboard.app` for your Mac's chip, signs it for this Mac on
 
 ### Updates
 
-From version 1.1.0 the installed Windows app updates itself (the Mac app doesn't; see step 6). It checks when it opens and every 6 hours, downloads new versions in the background, then shows **"Bonsai Dashboard 1.x.x is ready" → Restart to update**. Choose **Later** and it installs the next time you quit. **Settings → Updates → Check for updates** checks straight away.
+From version 1.1.0 the installed Windows app updates itself (the Mac app doesn't; see step 6). It checks when it opens and every 6 hours, downloads new versions in the background, then shows **"Drift Dashboard 1.x.x is ready" → Restart to update**. Choose **Later** and it installs the next time you quit. **Settings → Updates → Check for updates** checks straight away.
 
 > Version 1.0.0 has no updater: install 1.1.0 by hand once from the [releases page](https://github.com/drift-creative-systems/bonsai-dashboard-releases/releases/latest). Your accounts and layout are kept.
 
@@ -117,7 +119,7 @@ For **each** Gmail account:
 
 1. Sign in to that account and open [myaccount.google.com/security](https://myaccount.google.com/security).
 2. Make sure **2-Step Verification** is on (app passwords need it).
-3. Open [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords), type the name `Bonsai Dashboard` and click **Create**.
+3. Open [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords), type the name `Drift Dashboard` and click **Create**.
 4. Copy the 16-letter password (spaces don't matter).
 5. In the dashboard: **Type: Gmail**, enter the email address and paste the app password. **Save**.
 
@@ -154,19 +156,19 @@ This card signs in to Google Calendar, so Up next shows each event in the colour
 
 **Once: create the OAuth client**
 
-1. Go to [console.cloud.google.com](https://console.cloud.google.com), sign in with any of your Google accounts, and create a project called `Bonsai Dashboard`.
+1. Go to [console.cloud.google.com](https://console.cloud.google.com), sign in with any of your Google accounts, and create a project called `Drift Dashboard`.
 2. Open [the Google Calendar API page](https://console.cloud.google.com/apis/library/calendar-json.googleapis.com) and click **Enable**.
 3. Open **Google Auth Platform** (APIs & Services → OAuth consent screen) → **Get started**:
-   - App name: `Bonsai Dashboard`, support email: yours.
+   - App name: `Drift Dashboard`, support email: yours.
    - Audience: **External** (so it works for every account, not only that one's Workspace).
    - Contact email: yours. Agree and **Create**.
 4. **Audience** → **Publish app** → Confirm. This matters: while the app is in **Testing**, Google signs it out every 7 days. You don't need Google to verify it; it's only for you.
-5. **Clients** → **Create client** → Application type **Desktop app**, name `Bonsai Dashboard` → **Create**. Copy the **Client ID** and **Client secret** straight away (Google may only show the secret once).
+5. **Clients** → **Create client** → Application type **Desktop app**, name `Drift Dashboard` → **Create**. Copy the **Client ID** and **Client secret** straight away (Google may only show the secret once).
 
 **For each Google account:**
 
 1. In the dashboard: **Type: Google Calendar (sign-in, with colours)**, Card name e.g. "Gak Design", paste the client ID and secret. **Save**.
-2. Your browser opens. Choose the account. Google warns **"Google hasn't verified this app"**: click **Advanced → Go to Bonsai Dashboard (unsafe)**. It's your own app, asking only to *view* your calendars. Then **Continue**.
+2. Your browser opens. Choose the account. Google warns **"Google hasn't verified this app"**: click **Advanced → Go to Drift Dashboard (unsafe)**. It's your own app, asking only to *view* your calendars. Then **Continue**.
 
 To show other calendars you've ticked in Google Calendar as well (shared or team calendars), tick **Also include the other calendars ticked in Google Calendar**. Their name appears after the card name in Up next.
 
@@ -185,7 +187,7 @@ Outlook needs a free **app registration** with Microsoft (about 10 minutes, once
 1. Go to [entra.microsoft.com](https://entra.microsoft.com) and sign in with your Microsoft account.
    - If it says you don't have access or a directory, sign up for a free [Azure account](https://azure.microsoft.com/free/). That creates the directory (no charges for this).
 2. **Applications → App registrations → New registration**.
-   - Name: `Bonsai Dashboard`
+   - Name: `Drift Dashboard`
    - Supported account types: **Accounts in any organizational directory and personal Microsoft accounts**
    - Redirect URI: choose **Public client/native (mobile & desktop)** and enter exactly `http://localhost:8890/callback`
    - Click **Register**.
@@ -220,7 +222,7 @@ For **each** workspace:
    ```json
    {
      "display_information": {
-       "name": "Bonsai Dashboard",
+       "name": "Drift Dashboard",
        "description": "Read-only feed of my latest DMs for my desktop dashboard"
      },
      "oauth_config": {
@@ -267,7 +269,7 @@ The card shows **Due this week** (including overdue) and **Recent activity on yo
 
 1. Go to [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard), log in and accept the terms.
 2. **Create app**:
-   - App name: `Bonsai Dashboard`, description: `Personal desktop dashboard`
+   - App name: `Drift Dashboard`, description: `Personal desktop dashboard`
    - Redirect URI: exactly `http://127.0.0.1:8890/callback` → **Add**
    - Tick **Web API**, accept the terms → **Save**
 3. Open the app → **Settings** → copy the **Client ID**.
@@ -323,7 +325,7 @@ That usage service isn't publicly documented, so Anthropic could change it. If t
 ### Strava
 
 1. Go to [strava.com/settings/api](https://www.strava.com/settings/api) and create an app:
-   - Application name: `Bonsai Dashboard`
+   - Application name: `Drift Dashboard`
    - Category: `Data Importer` (any category works)
    - Website: `https://bonsaidigitalcollective.co.uk`
    - **Authorization Callback Domain:** `127.0.0.1`
@@ -357,7 +359,7 @@ The card checks every 15 minutes and shows:
 - **This year so far**: number of events and total spend, the same figures as the app's dashboard.
 - Events marked *Attended* or *Didn't go* are left out of the upcoming list.
 
-How it works: the dashboard signs in once and keeps the token the plugin issues (it shows as a "Bonsai Dashboard" device and lasts 180 days from its last use). Your password is saved encrypted, like an email password, and is only used again if the token stops working, e.g. after a password reset. If you change your Drift: Record password, update it here too.
+How it works: the dashboard signs in once and keeps the token the plugin issues (it shows as a "Drift Dashboard" device and lasts 180 days from its last use). Your password is saved encrypted, like an email password, and is only used again if the token stops working, e.g. after a password reset. If you change your Drift: Record password, update it here too.
 
 ### Support tickets (support.bonsaidigitalcollective.co.uk and support.driftcreativesystems.co.uk)
 
@@ -366,7 +368,7 @@ How it works: the dashboard signs in once and keeps the token the plugin issues 
 Then, on **each** site:
 
 1. Log in to WordPress as an agent or admin → **Users → Profile**.
-2. Scroll to **Application Passwords**, name it `Bonsai Dashboard`, click **Add New Application Password** and copy it.
+2. Scroll to **Application Passwords**, name it `Drift Dashboard`, click **Add New Application Password** and copy it.
 3. In the dashboard: **Type: Support tickets**, Site address e.g. `https://support.bonsaidigitalcollective.co.uk`, your WordPress username and the application password. **Save**.
 
 If there's no Application Passwords section, a security plugin (Wordfence, Solid Security, etc.) has turned it off. Allow it for your user in that plugin's settings.
@@ -392,7 +394,7 @@ For **each** account, create a token. Choose **one** of these two kinds:
 **Option A: fine-grained token (recommended, read-only)**
 
 1. Sign in to that GitHub account → avatar → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
-2. Name: `Bonsai Dashboard`. Expiration: up to 1 year (put a reminder in your calendar).
+2. Name: `Drift Dashboard`. Expiration: up to 1 year (put a reminder in your calendar).
 3. **Resource owner:** your user, *or* an organisation such as Bonsai-Systems. A fine-grained token covers **one owner only**, so for your own repos plus an organisation's repos, make two tokens and add two cards (e.g. "Gak Design" and "Bonsai-Systems").
 4. **Repository access:** All repositories.
 5. **Repository permissions:** **Actions → Read-only**, **Contents → Read-only**, **Pull requests → Read-only**. (Metadata is added automatically.)
@@ -411,7 +413,7 @@ Then in the dashboard: **Type: GitHub**, Card name e.g. "Bonsai-Systems", paste 
 FreeAgent needs a free developer app (about 5 minutes, once).
 
 1. Go to [dev.freeagent.com](https://dev.freeagent.com), sign in (this is a separate developer account; you can sign up with the same email) and click **Create New App**.
-2. Name: `Bonsai Dashboard`. **OAuth redirect URIs:** `http://localhost:8890/callback`. Save.
+2. Name: `Drift Dashboard`. **OAuth redirect URIs:** `http://localhost:8890/callback`. Save.
 3. Copy the **OAuth identifier** and **OAuth secret**.
 4. In the dashboard: **Type: FreeAgent**, paste both. **Save**. Your browser opens; sign in to your **normal** FreeAgent account and click **Approve**.
 
@@ -496,11 +498,13 @@ Click a notification to open the dashboard. Switch each type on or off under Set
 
 ## Where your data lives
 
-- **Settings and accounts:** `%APPDATA%\Bonsai Dashboard\config.json` (no passwords in it).
-- **Passwords, keys and tokens:** `%APPDATA%\Bonsai Dashboard\secrets.json`, encrypted with Windows DPAPI via Electron `safeStorage`. Only your Windows user on this PC can decrypt it. Copying the file to another PC won't work, which is deliberate: you'd re-add accounts there.
+- **Settings and accounts:** `%APPDATA%\Drift Dashboard\config.json` (no passwords in it).
+- **Passwords, keys and tokens:** `%APPDATA%\Drift Dashboard\secrets.json`, encrypted with Windows DPAPI via Electron `safeStorage`. Only your Windows user on this PC can decrypt it. Copying the file to another PC won't work, which is deliberate: you'd re-add accounts there.
 - Nothing is stored in this project folder, and nothing is sent anywhere except to each service itself.
 
-To start again from scratch, quit the app (tray → Quit) and delete `%APPDATA%\Bonsai Dashboard`.
+To start again from scratch, quit the app (tray → Quit) and delete `%APPDATA%\Drift Dashboard`.
+
+**Coming from Bonsai Dashboard (1.10.0 or earlier):** the first time Drift Dashboard starts, it copies your accounts, layout and settings from `%APPDATA%\Bonsai Dashboard` (on a Mac, `~/Library/Application Support/Bonsai Dashboard`). On Windows your saved passwords come across too. On a Mac they're locked to the old app's keychain entry, so open Settings and enter them again once. The old folder is left alone; delete it when you're happy.
 
 ## Troubleshooting
 
@@ -529,7 +533,7 @@ npm run demo     # run with sample data (separate, throwaway settings)
 npm run check    # syntax-check every JS file
 npm run icons    # regenerate the app icon, the Windows tray icons and the macOS menu bar icons
 npm run dist     # build the Windows installer into dist\ (no upload)
-npm run mac      # Mac: build Bonsai Dashboard.app, sign it for this Mac and install it in Applications
+npm run mac      # Mac: build Drift Dashboard.app, sign it for this Mac and install it in Applications
 npm run release  # build and publish an update (see below)
 ```
 
@@ -539,7 +543,7 @@ In development, **Ctrl+Shift+I** opens DevTools, and window errors are echoed to
 
 ### Releasing a new version
 
-Source stays in this private repo. Installers and `latest.yml` (which the updater reads) go to the public repo [drift-creative-systems/bonsai-dashboard-releases](https://github.com/drift-creative-systems/bonsai-dashboard-releases), which holds nothing else. No token is built into the app.
+Source is in this repo ([drift-creative-systems/drift-dashboard](https://github.com/drift-creative-systems/drift-dashboard)). Installers and `latest.yml` (which the updater reads) go to the public repo [drift-creative-systems/bonsai-dashboard-releases](https://github.com/drift-creative-systems/bonsai-dashboard-releases), which holds nothing else. No token is built into the app.
 
 1. Bump `version` in `package.json`, add a CHANGELOG entry, merge `develop` → `main`.
 2. Tag it: `git tag -a v1.2.0 -m "v1.2.0"` then `git push origin main --tags`.
@@ -551,7 +555,7 @@ The workflow needs one repo secret, `RELEASES_TOKEN`: a fine-grained personal ac
 
 1. Create the release in the public repo first. electron-builder uploads two files at once, and if both try to create the release, one fails with "Published releases must have a valid tag":
    ```powershell
-   gh release create v1.2.0 -R drift-creative-systems/bonsai-dashboard-releases --title "Bonsai Dashboard 1.2.0" --notes "What's new: ..."
+   gh release create v1.2.0 -R drift-creative-systems/bonsai-dashboard-releases --title "Drift Dashboard 1.2.0" --notes "What's new: ..."
    ```
 2. Publish, using your own GitHub login for the upload (needs write access to the releases repo):
    ```powershell

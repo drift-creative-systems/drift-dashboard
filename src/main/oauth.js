@@ -93,7 +93,7 @@ function authorize(authUrl, params, host = '127.0.0.1') {
 				res.end(PAGE('Sign-in cancelled', 'No changes were made. You can close this tab.'));
 				finish(new Error(error ? `Sign-in was refused (${error}).` : 'No authorisation code was returned.'));
 			} else {
-				res.end(PAGE('Connected', 'You can close this tab and go back to Bonsai Dashboard.'));
+				res.end(PAGE('Connected', 'You can close this tab and go back to Drift Dashboard.'));
 				finish(null, code);
 			}
 		};

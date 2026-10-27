@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.11.0] - 2026-10-27
+
+### Changed
+- Rebranded as **Drift Dashboard**, from Drift Creative Systems (was Bonsai Dashboard). The window title, tray/menu bar tooltip, installer, update bar and the device names shown to Plex, Drift: Record and WordPress all use the new name. The README has the Drift banner and is headed **Drift: Dashboard**.
+- The source repo is now public, at [drift-creative-systems/drift-dashboard](https://github.com/drift-creative-systems/drift-dashboard). Releases still come from `bonsai-dashboard-releases`, so installed copies keep updating.
+- `npm run mac` also removes the old `Bonsai Dashboard.app` from Applications, and won't install while either copy is running.
+
+### Added
+- On first start, Drift Dashboard copies your accounts, layout and settings from the old `Bonsai Dashboard` settings folder (skipping caches), leaving the old folder as a backup. Saved passwords come across on Windows; on a Mac they're tied to the old keychain entry and need entering again.
+
 ## [1.10.0] - 2026-10-27
 
 ### Added
