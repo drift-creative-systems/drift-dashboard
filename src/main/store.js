@@ -6,7 +6,7 @@
  *                OAuth tokens). Encrypted with Electron safeStorage, which
  *                on Windows is DPAPI: only your Windows user can decrypt it.
  *
- * Both live in %APPDATA%\Bonsai Dashboard, never in the project folder.
+ * Both live in %APPDATA%\Drift Dashboard, never in the project folder.
  */
 const { app, safeStorage } = require('electron');
 const fs = require('fs');

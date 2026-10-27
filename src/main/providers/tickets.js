@@ -27,7 +27,7 @@ module.exports = {
 	section: 'tickets',
 	interval: 2 * 60 * 1000,
 	oauth: false,
-	help: 'WordPress → Users → Profile → Application Passwords → add "Bonsai Dashboard".',
+	help: 'WordPress → Users → Profile → Application Passwords → add "Drift Dashboard".',
 	fields: [
 		{ key: 'site', label: 'Site address', type: 'text', placeholder: 'https://support.example.co.uk', required: true },
 		{ key: 'username', label: 'WordPress username', type: 'text', required: true },

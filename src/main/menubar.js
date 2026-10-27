@@ -265,7 +265,7 @@ function create(deps) {
 			if (MAC) {
 				deps.tray.setTitle(text ? ` ${text}` : '', { fontType: 'monospacedDigit' });
 			}
-			deps.tray.setToolTip(text ? `Bonsai Dashboard · ${text}` : 'Bonsai Dashboard');
+			deps.tray.setToolTip(text ? `Drift Dashboard · ${text}` : 'Drift Dashboard');
 		}
 		const template = menuTemplate();
 		const key = JSON.stringify(template, (k, v) => ('click' === k ? undefined : v));

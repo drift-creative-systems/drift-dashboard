@@ -1,9 +1,9 @@
 {
-  "name": "bonsai-desktop-dashboard",
-  "productName": "Bonsai Dashboard",
-  "version": "1.10.0",
+  "name": "drift-dashboard",
+  "productName": "Drift Dashboard",
+  "version": "1.11.0",
   "description": "Everything at a glance: Spotify, Plex, Claude plan usage, your next gig (Drift: Record), email, calendars, Slack, ClickUp, Strava, Xbox and support tickets.",
-  "author": "The Bonsai Digital Collective",
+  "author": "Drift Creative Systems",
   "license": "UNLICENSED",
   "private": true,
   "main": "src/main/main.js",
@@ -19,7 +19,7 @@
   },
   "build": {
     "appId": "uk.co.bonsaidigitalcollective.dashboard",
-    "productName": "Bonsai Dashboard",
+    "productName": "Drift Dashboard",
     "directories": {
       "output": "dist"
     },

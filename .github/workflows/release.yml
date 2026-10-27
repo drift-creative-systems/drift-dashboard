@@ -66,7 +66,7 @@ jobs:
             found
           ' CHANGELOG.md | tr -d '\r' > notes.md
           gh release create "$GITHUB_REF_NAME" -R "$RELEASES_REPO" \
-            --title "Bonsai Dashboard $version" --notes-file notes.md
+            --title "Drift Dashboard $version" --notes-file notes.md
 
       - name: Build and publish
         env:

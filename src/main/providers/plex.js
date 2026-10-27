@@ -10,7 +10,7 @@ const POSTER_MAX_BYTES = 200 * 1024;
 
 // Plex needs these to identify the app; the ID only has to be stable.
 const CLIENT_HEADERS = {
-	'X-Plex-Product': 'Bonsai Dashboard',
+	'X-Plex-Product': 'Drift Dashboard',
 	'X-Plex-Client-Identifier': 'bonsai-desktop-dashboard',
 };
 
