@@ -4,8 +4,10 @@
  * background, then asks to restart. If ignored, the update installs when
  * the app quits.
  *
- * Only the installed app updates; `npm start` and demo mode report
- * "dev" and never check. Failures are logged and shown in Settings, never
+ * Only the installed Windows app updates; `npm start` and demo mode report
+ * "dev" and never check. macOS only installs updates for apps signed with
+ * an Apple Developer ID, which the Mac build isn't, so it reports "manual":
+ * rebuild with `npm run mac` to update. Failures are logged and shown in Settings, never
  * thrown, so the dashboard keeps working offline.
  */
 const { app } = require('electron');
@@ -58,6 +60,10 @@ function init({ send, demo, beforeInstall }) {
 	notify = send;
 	if (!app.isPackaged || demo) {
 		status = { state: 'dev' };
+		return;
+	}
+	if ('darwin' === process.platform) {
+		status = { state: 'manual' };
 		return;
 	}
 

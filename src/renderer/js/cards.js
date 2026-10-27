@@ -13,6 +13,7 @@
 		outlook: { icon: 'O', brand: '#0a64c2', section: 'email' },
 		proton: { icon: 'P', brand: '#6d4aff', section: 'email' },
 		ics: { icon: 'C', brand: '#1a73e8', section: 'calendar' },
+		gcal: { icon: 'C', brand: '#1a73e8', section: 'calendar' },
 		slack: { icon: 'S', brand: '#4a154b', section: 'slack' },
 		clickup: { icon: 'C', brand: '#7b68ee', section: 'clickup' },
 		tickets: { icon: 'T', brand: '#ee4367', section: 'tickets' },
@@ -41,10 +42,56 @@
 		{ id: 'github', title: 'GitHub', gridClass: 'grid' },
 	];
 
-	function open(url) {
-		if (url) {
-			window.dashboard.openLink(url);
+	/** Card types that share another's logo. */
+	const LOGO_OF = { gcal: 'ics' };
+
+	/** Card types whose events go into Up next. */
+	const CALENDARS = ['ics', 'gcal', 'outlook'];
+
+	/**
+	 * Open a link. The card it was clicked in (data-card-id) decides which
+	 * app opens it, if one is chosen in Settings.
+	 */
+	function open(url, event) {
+		if (!url) {
+			return;
 		}
+		const from = event && event.currentTarget && event.currentTarget.closest ? event.currentTarget.closest('[data-card-id]') : null;
+		window.dashboard.openLink(url, from ? from.dataset.cardId : null);
+	}
+
+	function safeLink(url) {
+		return /^https:\/\//i.test(String(url || '')) ? url : null;
+	}
+
+	/** "Google Meet", "Zoom", "Teams"… for the Join button, from the link. */
+	function meetingName(url) {
+		const host = (() => {
+			try {
+				return new URL(url).hostname;
+			} catch {
+				return '';
+			}
+		})();
+		if (/meet\.google\.com$/.test(host)) {
+			return 'Google Meet';
+		}
+		if (/zoom\.us$/.test(host)) {
+			return 'Zoom';
+		}
+		if (/teams\.(microsoft|live)\.com$/.test(host)) {
+			return 'Teams';
+		}
+		if (/webex\.com$/.test(host)) {
+			return 'Webex';
+		}
+		return 'meeting';
+	}
+
+	/** Only plain colours (hex or a CSS name) reach the page's styles. */
+	function safeColour(value) {
+		const v = String(value || '').trim();
+		return /^#[0-9a-f]{3,8}$/i.test(v) || /^[a-z]{3,20}$/i.test(v) ? v : null;
 	}
 
 	/* ------------------------------------------------------------ Building blocks */
@@ -65,7 +112,8 @@
 	 */
 	function icon(provider, appearance = {}) {
 		const meta = META[provider] || {};
-		const logo = (window.BD.logos || {})[provider];
+		const logos = window.BD.logos || {};
+		const logo = logos[provider] || logos[LOGO_OF[provider]];
 		const custom = String(appearance.icon || '').trim();
 		const colour = appearance.color || (custom ? meta.brand : (logo ? logo.hex : meta.brand)) || '';
 		const attrs = { class: ['card__icon', isLight(colour) && 'is-light'], style: { '--brand': colour }, 'aria-hidden': 'true' };
@@ -102,6 +150,7 @@
 		return h('article', {
 			class: ['card', `card--${card.provider}`, `is-${card.status}`, card.refreshing && 'is-refreshing', wide && 'card--wide', accent && 'has-accent'],
 			'aria-labelledby': `card-${card.id}`,
+			data: { cardId: card.id },
 			style: accent ? { '--card-accent': accent } : null,
 		},
 			h('header', { class: 'card__head' },
@@ -135,13 +184,13 @@
 		);
 	}
 
-	function unreadBadge(n) {
-		return h('span', { class: ['badge', !n && 'badge--quiet'], title: `${n} unread`, 'aria-label': `${n} unread` }, n > 99 ? '99+' : String(n));
+	function unreadBadge(n, kind = 'unread') {
+		return h('span', { class: ['badge', !n && 'badge--quiet'], title: `${n} ${kind}`, 'aria-label': `${n} ${kind}` }, n > 99 ? '99+' : String(n));
 	}
 
-	function row({ main, time, sub, text, unread, url, timeClass, before }) {
+	function row({ main, time, sub, text, unread, url, timeClass, before, cardId }) {
 		return h('li', null,
-			h('button', { type: 'button', class: ['row', unread && 'is-unread'], on: { click: () => open(url) } },
+			h('button', { type: 'button', class: ['row', unread && 'is-unread'], data: cardId ? { cardId } : null, on: { click: (e) => open(url, e) } },
 				h('span', { class: 'row__top' },
 					before || null,
 					h('span', { class: 'row__main' }, main),
@@ -163,16 +212,18 @@
 		const d = card.data || {};
 		const shown = d.messages || [];
 		const more = d.unreadOnly ? (d.unread || 0) - shown.length : 0;
-		return shell(card, name, { sub: d.email, badge: card.data ? unreadBadge(d.unread || 0) : null },
+		const kind = d.important ? 'important unread' : 'unread';
+		const badge = card.data ? unreadBadge(d.unread || 0, kind) : null;
+		return shell(card, name, { sub: d.important ? `${d.email} · Important` : d.email, badge },
 			rows(shown.map((m) => row({
 				main: m.subject,
 				sub: m.from,
 				time: shortTime(m.date),
 				unread: m.unread,
 				url: m.url,
-			})), d.unreadOnly ? 'All caught up: no unread email.' : 'Inbox is empty.'),
-			more > 0 ? h('p', { class: 'muted small' }, `+${more} more unread`) : null,
-			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open(d.url) } }, 'Open inbox')
+			})), d.unreadOnly ? `All caught up: no ${kind} email.` : 'Inbox is empty.'),
+			more > 0 ? h('p', { class: 'muted small' }, `+${more} more ${kind}`) : null,
+			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: (e) => open(d.url, e) } }, 'Open inbox')
 		);
 	}
 
@@ -184,7 +235,7 @@
 		}
 		const pct = t.duration ? Math.min(100, Math.round((d.progress / t.duration) * 100)) : 0;
 		return shell(card, name, {},
-			h('button', { type: 'button', class: 'media', on: { click: () => open(t.url) }, 'aria-label': `${t.title} by ${t.artist}, open in Spotify` },
+			h('button', { type: 'button', class: 'media', on: { click: (e) => open(t.url, e) }, 'aria-label': `${t.title} by ${t.artist}, open in Spotify` },
 				t.image ? h('img', { class: 'media__art', src: t.image, alt: '', width: 72, height: 72 }) : h('span', { class: 'media__art' }),
 				h('span', { class: 'media__body' },
 					h('span', { class: 'media__state' }, d.playing ? 'Now playing' : (d.playedAt ? `Last played · ${ago(d.playedAt)}` : 'Paused')),
@@ -213,7 +264,7 @@
 			s.remote ? h('span', { class: 'pill' }, 'Remote') : null,
 		];
 		return h('li', null,
-			h('button', { type: 'button', class: 'stream', on: { click: () => open(url) }, 'aria-label': `${s.user} is watching ${s.title}${s.sub ? `, ${s.sub}` : ''} on ${s.device}. Open Plex` },
+			h('button', { type: 'button', class: 'stream', on: { click: (e) => open(url, e) }, 'aria-label': `${s.user} is watching ${s.title}${s.sub ? `, ${s.sub}` : ''} on ${s.device}. Open Plex` },
 				s.image
 					? h('img', { class: ['stream__art', 'track' === s.kind && 'is-square'], src: s.image, alt: '', width: 48, height: 'track' === s.kind ? 48 : 72 })
 					: h('span', { class: ['stream__art', 'track' === s.kind && 'is-square'] }),
@@ -242,7 +293,7 @@
 			streams.length
 				? h('ul', { class: 'streams' }, streams.map((s) => plexStream(s, d.url)))
 				: h('p', { class: 'card__empty' }, 'Nothing playing on your server.'),
-			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open(d.url) } }, 'Open Plex')
+			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: (e) => open(d.url, e) } }, 'Open Plex')
 		);
 	}
 
@@ -302,7 +353,7 @@
 				h('span', { class: 'usage-list__name' }, a.name),
 				h('span', { class: 'usage-list__value' }, `${a.percent}%`)
 			))) : null,
-			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open(d.url) } }, 'Open usage on claude.ai')
+			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: (e) => open(d.url, e) } }, 'Open usage on claude.ai')
 		);
 	}
 
@@ -322,7 +373,7 @@
 				stat(walk.count ? `Walk · ${walk.count}` : 'Walk', duration(walk.seconds), walk.count ? km(walk.metres) : 'None yet'),
 				stat('Gym', String(gym.count || 0), 1 === gym.count ? 'session' : 'sessions')
 			),
-			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open('https://www.strava.com/dashboard') } }, 'Open Strava')
+			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: (e) => open('https://www.strava.com/dashboard', e) } }, 'Open Strava')
 		);
 	}
 
@@ -357,7 +408,7 @@
 				time: shortTime(m.date),
 				url: m.url,
 			})), 'No recent direct messages.'),
-			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open(d.url) } }, 'Open Slack')
+			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: (e) => open(d.url, e) } }, 'Open Slack')
 		);
 	}
 
@@ -387,7 +438,7 @@
 					rows((d.activity || []).map((t) => clickupTask(t, 'activity')), 'Nothing changed in the last 3 days.')
 				)
 			),
-			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open(d.url) } }, 'Open ClickUp')
+			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: (e) => open(d.url, e) } }, 'Open ClickUp')
 		);
 	}
 
@@ -415,23 +466,35 @@
 				url: t.url,
 				before: h('span', { class: ['pill', TICKET_STATUS[t.status] && `pill--${TICKET_STATUS[t.status]}`] }, t.status_label),
 			})), 'No open tickets.'),
-			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open(d.url) } }, 'Open all tickets')
+			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: (e) => open(d.url, e) } }, 'Open all tickets')
 		);
 	}
 
 	/**
-	 * Calendar accounts (iCal links) don't get their own card; their events
-	 * are merged with Outlook calendars into one Up next card.
+	 * Calendar accounts (iCal links, Google sign-in) don't get their own
+	 * card; their events are merged with Outlook calendars into one Up next
+	 * card.
+	 *
+	 * Each event's dot: the colour given to the event itself (Google sign-in,
+	 * or an iCal COLOR), else the card's own icon colour from Settings, else
+	 * the Google calendar's colour, else one from CAL_COLOURS.
 	 */
 	function upNext(cards, accounts, { rows: maxRows = 5 } = {}) {
-		const calCards = cards.filter((c) => 'ics' === c.provider || ('outlook' === c.provider && c.data && c.data.events));
-		const colour = new Map(accounts.filter((a) => 'ics' === a.provider || 'outlook' === a.provider)
-			.map((a, i) => [a.id, a.config.icon_color || CAL_COLOURS[i % CAL_COLOURS.length]]));
+		const calCards = cards.filter((c) => ['ics', 'gcal'].includes(c.provider) || ('outlook' === c.provider && c.data && c.data.events));
+		const calAccounts = accounts.filter((a) => CALENDARS.includes(a.provider));
+		const custom = new Map(calAccounts.map((a) => [a.id, a.config.icon_color || null]));
+		const fallback = new Map(calAccounts.map((a, i) => [a.id, CAL_COLOURS[i % CAL_COLOURS.length]]));
+		const names = { ics: 'Calendar', gcal: 'Google Calendar', outlook: 'Outlook' };
 
 		const events = [];
 		for (const card of calCards) {
 			for (const ev of (card.data && card.data.events) || []) {
-				events.push({ ...ev, source: card.label || ('ics' === card.provider ? 'Calendar' : 'Outlook'), colour: colour.get(card.id) });
+				events.push({
+					...ev,
+					cardId: card.id,
+					source: [card.label || names[card.provider], ev.calendar].filter(Boolean).join(' · '),
+					colour: safeColour(ev.colour) || custom.get(card.id) || safeColour(ev.calendarColour) || fallback.get(card.id),
+				});
 			}
 		}
 		const now = Date.now();
@@ -463,18 +526,31 @@
 			),
 			...errors.map((c) => h('p', { class: 'card__error', role: 'alert' }, `${c.label || 'Calendar'}: ${c.error}`)),
 			next
-				? h('button', { type: 'button', class: 'next', on: { click: () => open(next.url) } },
+				? h('button', { type: 'button', class: 'next', data: { cardId: next.cardId }, on: { click: (e) => open(next.url, e) } },
 					h('span', { class: 'next__when' }, eventWhen(next)),
 					h('span', { class: 'next__title' }, next.title),
 					h('span', { class: 'row__sub' }, dot(next), [next.source, next.location].filter(Boolean).join(' · '))
 				)
 				: (loading ? h('div', { class: 'skeleton' }) : h('p', { class: 'card__empty' }, 'Nothing in the next two weeks.')),
+			// The headline is a button itself, so Join goes beside it, not inside.
+			next && safeLink(next.meetingUrl)
+				? h('div', { class: 'next__actions' },
+					h('button', {
+						type: 'button',
+						class: 'btn btn--small btn--primary',
+						data: { cardId: next.cardId },
+						'aria-label': `Join ${next.title}`,
+						on: { click: (e) => open(next.meetingUrl, e) },
+					}, `Join ${meetingName(next.meetingUrl)}`)
+				)
+				: null,
 			rest.length ? rows(rest.map((e) => row({
 				main: e.title,
 				sub: [e.source, e.location].filter(Boolean).join(' · '),
 				time: eventWhen(e),
 				url: e.url,
 				before: dot(e),
+				cardId: e.cardId,
 			})), '') : null
 		);
 	}
@@ -510,7 +586,7 @@
 		const tm = d.tomorrow || {};
 		const now = sky(c.code, c.day);
 		return shell(card, name, { sub: d.place },
-			h('button', { type: 'button', class: 'wx', on: { click: () => open(d.url) }, 'aria-label': `${d.place}: ${deg(c.temp)}, ${now.label}. Open Met Office forecast` },
+			h('button', { type: 'button', class: 'wx', on: { click: (e) => open(d.url, e) }, 'aria-label': `${d.place}: ${deg(c.temp)}, ${now.label}. Open Met Office forecast` },
 				h('span', { class: 'wx__icon', 'aria-hidden': 'true' }, now.icon),
 				h('span', { class: 'wx__temp' }, deg(c.temp)),
 				h('span', { class: 'wx__body' },
@@ -581,7 +657,7 @@
 					before: h('span', { class: 'pill pill--success' }, r.duration_seconds ? duration(r.duration_seconds) : 'Up'),
 				})), '')
 			) : null,
-			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open(d.url) } }, 'Open monitor')
+			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: (e) => open(d.url, e) } }, 'Open monitor')
 		);
 	}
 
@@ -615,7 +691,7 @@
 					url: a.url,
 				})), 'No recent activity.')
 			),
-			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open(d.url) } }, 'Open GitHub')
+			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: (e) => open(d.url, e) } }, 'Open GitHub')
 		);
 	}
 
@@ -692,7 +768,7 @@
 					}), 'No upcoming deadlines.')
 				)
 			),
-			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open(d.url) } }, 'Open FreeAgent')
+			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: (e) => open(d.url, e) } }, 'Open FreeAgent')
 		);
 	}
 
@@ -757,7 +833,7 @@
 
 		return shell(card, name, { sub: d.email, badge },
 			n
-				? h('button', { type: 'button', class: 'next', on: { click: () => open(d.url) }, 'aria-label': `Next: ${n.name}, ${gigWhen(n)}. Open Drift: Record` },
+				? h('button', { type: 'button', class: 'next', on: { click: (e) => open(d.url, e) }, 'aria-label': `Next: ${n.name}, ${gigWhen(n)}. Open Drift: Record` },
 					h('span', { class: 'next__when' }, gigWhen(n)),
 					h('span', { class: 'next__title' }, n.name),
 					h('span', { class: 'row__sub' }, gigPill(n), ' ', [n.venue, n.city].filter(Boolean).join(' · ')),
@@ -772,7 +848,7 @@
 				before: gigPill(e),
 			})), '') : null,
 			y.year ? h('p', { class: 'muted small' }, `${y.year} so far: ${plural(y.count || 0, 'event')} · ${money(y.spend)}`) : null,
-			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: () => open(d.url) } }, 'Open Drift: Record')
+			h('button', { type: 'button', class: 'btn btn--small btn--ghost', on: { click: (e) => open(d.url, e) } }, 'Open Drift: Record')
 		);
 	}
 
@@ -783,5 +859,5 @@
 		return fn ? fn(card, providerName) : null;
 	}
 
-	window.BD.cards = { META, SECTIONS, render, upNext, icon };
+	window.BD.cards = { META, SECTIONS, CALENDARS, render, upNext, icon };
 }());

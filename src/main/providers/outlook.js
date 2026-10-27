@@ -5,6 +5,7 @@
  */
 const oauth = require('../oauth');
 const { request } = require('../http');
+const meetings = require('../meetings');
 
 const TENANT = 'common'; // Personal and work/school accounts.
 const AUTH_URL = `https://login.microsoftonline.com/${TENANT}/oauth2/v2.0/authorize`;
@@ -95,7 +96,7 @@ module.exports = {
 			get('/me/mailFolders/inbox?$select=unreadItemCount'),
 			get(`/me/mailFolders/inbox/messages?$top=3${filter}&$orderby=receivedDateTime desc&$select=subject,from,receivedDateTime,isRead,webLink`),
 			wantCalendar
-				? get(`/me/calendarView?startDateTime=${now.toISOString()}&endDateTime=${until.toISOString()}&$orderby=start/dateTime&$top=5&$select=subject,start,end,location,isAllDay,webLink,isCancelled`)
+				? get(`/me/calendarView?startDateTime=${now.toISOString()}&endDateTime=${until.toISOString()}&$orderby=start/dateTime&$top=5&$select=subject,start,end,location,isAllDay,webLink,isCancelled,onlineMeeting,onlineMeetingUrl,bodyPreview`)
 				: Promise.resolve({ value: [] }),
 		]);
 
@@ -123,6 +124,9 @@ module.exports = {
 					allDay: Boolean(e.isAllDay),
 					location: (e.location && e.location.displayName) || '',
 					url: e.webLink,
+					meetingUrl: (e.onlineMeeting && e.onlineMeeting.joinUrl)
+						|| e.onlineMeetingUrl
+						|| meetings.find(e.location && e.location.displayName, e.bodyPreview),
 				})),
 		};
 	},

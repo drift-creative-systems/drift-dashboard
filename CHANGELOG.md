@@ -2,6 +2,29 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.10.0] - 2026-10-27
+
+### Added
+- Gmail cards have a **Show** option: unread emails (as before), **Important and unread** (only unread emails Gmail marked Important, using Gmail's own `is:important` search; the count matches), or the latest emails whether read or not. Existing cards keep their current setting.
+- **Google Calendar (sign-in, with colours)** card type. It reads Google Calendar through its API (read-only), so Up next shows each event in the colour you gave it, and the calendar's colour for the rest. Optionally includes the other calendars ticked in Google Calendar. Needs a one-off Google Cloud OAuth client (Desktop app); the same client works for every Google account. Google's iCal links can't do this because they don't include colours.
+- iCal events that carry their own colour (the `COLOR` property, e.g. Fastmail, Apple) now show it in Up next.
+- **Open links with**: pick which app opens the dashboard's links in Settings → General (the browsers on this computer are listed, or choose any app), and override it per card under Edit → Advanced. Slack links still open in Slack. Apps are started directly with the link as their only argument, with no shell.
+- **How to set this up** in the add/edit account form: the README's setup steps for that card type, with working links and a Copy button for code such as the Slack manifest. Read from README.md at runtime, so there's one copy to maintain (README.md is now packaged with the app).
+- Claude plan usage works on macOS. Claude Code keeps its sign-in in the login Keychain there, not in `~/.claude/.credentials.json`, so the card now reads the `Claude Code-credentials` item with Apple's `security` tool. That includes the suffixed name Claude Code uses with `CLAUDE_CONFIG_DIR`, and falls back to the newest of any other `Claude Code-credentials-…` items, then to the file. It retries as soon as the keychain changes, so a renewed sign-in shows up straight away. Clear messages for a locked keychain or refused access.
+- **Menu bar readout** (macOS): Settings → General → **Menu bar shows** puts the next meeting (`Client call · in 25m`), the Spotify track playing, or Claude usage (`Claude 64% · wk 81%`) beside the menu bar icon. Clicking the icon opens a menu with all three: the next meeting with **Join meeting** and **Open in calendar** (and the next few under Later), the track, Claude's limits, and a quick switch for what the menu bar shows. The chosen source keeps checking while the dashboard is closed. On Windows the line is the tray tooltip and right-click opens the menu.
+- Meeting links: Google Calendar (sign-in) reads the event's Meet or conference link, Outlook its Teams join link, and iCal events have Meet/Zoom/Teams/Webex links found in their details. Up next shows a **Join** button for the next event when it has one.
+- **Mac app**: `npm run mac` builds Bonsai Dashboard as a Mac app for this Mac's chip, signs it ad hoc (Apple silicon won't run it otherwise) and installs it in Applications, replacing the old copy. It uses the same accounts as `npm start` (`~/Library/Application Support/Bonsai Dashboard`). It isn't Developer ID–signed or notarised, so it's for your own Mac, and it doesn't update itself: Settings → Updates says to rebuild instead.
+
+### Changed
+- macOS: clicking the Dock icon reopens the window after it's been closed to the menu bar. "Start with Windows" reads **Open at login** and starts in the menu bar, and the Accounts note mentions the Mac's keychain instead of Windows.
+- On macOS, clicking the menu bar icon opens its menu (with Open dashboard) instead of the window.
+- README: Part 1 has Mac install steps (`npm run mac`), and the Claude plan usage and Clawd steps cover macOS as well as Windows (where the sign-in lives, the keychain prompt, reduced motion, settings paths).
+- New menu bar icon on macOS: a crisp black-and-clear template image (18pt, with @2x), which macOS tints for light and dark menu bars. Windows gets 16px and 32px tray icons instead of one 32px icon scaled down, and the app icon is now 512px. All are still drawn by `npm run icons`.
+- In Up next, an event's own colour now comes before the card's icon colour.
+
+### Fixed
+- Up next could show "In 1 h 60 min" instead of "In 2 h 0 min".
+
 ## [1.9.1] - 2026-10-26
 
 ### Fixed

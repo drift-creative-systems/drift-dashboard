@@ -1208,6 +1208,12 @@ select {
 	cursor: pointer;
 }
 
+.next__actions {
+	display: flex;
+	gap: 8px;
+	margin: -4px 0 4px;
+}
+
 .next__when {
 	font-size: 12px;
 	font-weight: 700;
@@ -1347,6 +1353,108 @@ fieldset.stack > legend {
 
 .help:empty {
 	display: none;
+}
+
+/* Setup guide (README section) under the help line. */
+.guide-wrap {
+	background: var(--surface-2);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-sm);
+	padding: 8px 12px;
+}
+
+.guide-wrap[hidden] {
+	display: none;
+}
+
+.guide-wrap > summary {
+	color: var(--text);
+	font-weight: 600;
+}
+
+.guide {
+	font-size: 13px;
+	line-height: 1.55;
+	max-height: 420px;
+	overflow-y: auto;
+	padding-right: 6px;
+	display: grid;
+	gap: 8px;
+}
+
+.guide p {
+	margin: 0;
+}
+
+.guide__list {
+	margin: 0;
+	padding-left: 22px;
+	display: grid;
+	gap: 4px;
+}
+
+.guide__list .guide__list {
+	margin-top: 4px;
+}
+
+.guide li > p,
+.guide li > .guide__code,
+.guide li > .guide__note {
+	margin-top: 6px;
+}
+
+.guide code {
+	font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+	font-size: 12px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	padding: 0 4px;
+	overflow-wrap: anywhere;
+}
+
+.guide__code {
+	position: relative;
+}
+
+.guide__code pre {
+	margin: 0;
+	max-height: 220px;
+	overflow: auto;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-sm);
+	padding: 10px 12px;
+}
+
+.guide__code pre code {
+	background: none;
+	border: 0;
+	padding: 0;
+	overflow-wrap: normal;
+}
+
+.guide__copy {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+}
+
+.guide__copied {
+	font-size: 12px;
+	color: var(--muted);
+}
+
+.guide__note {
+	color: var(--muted);
+	border-left: 3px solid var(--border);
+	padding-left: 10px;
+}
+
+.guide__link {
+	color: var(--accent-text);
+	text-decoration: underline;
+	text-underline-offset: 2px;
 }
 
 details summary {

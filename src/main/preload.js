@@ -16,7 +16,8 @@ contextBridge.exposeInMainWorld('dashboard', {
 	saveSettings: (values) => ipcRenderer.invoke('settings:save', values),
 	saveLayout: (section, data) => ipcRenderer.invoke('layout:save', section, data),
 	saveSectionOrder: (order) => ipcRenderer.invoke('layout:sections', order),
-	openLink: (url) => ipcRenderer.invoke('link:open', url),
+	openLink: (url, accountId) => ipcRenderer.invoke('link:open', url, accountId || null),
+	chooseApp: () => ipcRenderer.invoke('apps:choose'),
 	checkForUpdates: () => ipcRenderer.invoke('update:check'),
 	installUpdate: () => ipcRenderer.invoke('update:install'),
 	onUpdate: (callback) => {
@@ -24,6 +25,9 @@ contextBridge.exposeInMainWorld('dashboard', {
 	},
 	onClawd: (callback) => {
 		ipcRenderer.on('clawd:activity', (_event, update) => callback(update));
+	},
+	onSettings: (callback) => {
+		ipcRenderer.on('settings:changed', (_event, next) => callback(next));
 	},
 	onCard: (callback) => {
 		ipcRenderer.on('card:update', (_event, card) => callback(card));

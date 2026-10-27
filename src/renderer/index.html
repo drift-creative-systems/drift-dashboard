@@ -44,8 +44,23 @@
 			<section class="panel" aria-labelledby="general-title">
 				<h3 id="general-title" class="panel__title">General</h3>
 				<form id="general-form" class="stack">
-					<label class="check"><input type="checkbox" name="startWithWindows"> Start with Windows (opens in the tray)</label>
+					<label class="check"><input type="checkbox" name="startWithWindows"> <span class="js-login-label">Start with Windows (opens in the tray)</span></label>
 					<label class="check"><input type="checkbox" name="closeToTray"> Closing the window keeps it running in the tray</label>
+					<label class="field" for="general-link-app">
+						<span class="field__label">Open links with</span>
+						<span id="general-link-app-wrap" class="field__control"></span>
+						<span class="field__hint">For emails, events, tasks and so on. Each card can use a different app (Edit → Advanced). Slack links always open in Slack.</span>
+					</label>
+					<label class="field" for="general-menu-bar">
+						<span class="field__label js-menu-bar-label">Menu bar shows</span>
+						<select name="menuBar" id="general-menu-bar">
+							<option value="none">Just the icon</option>
+							<option value="meeting">Next meeting (with a Join link in its menu)</option>
+							<option value="spotify">What's playing on Spotify</option>
+							<option value="claude">Claude plan usage</option>
+						</select>
+						<span class="field__hint js-menu-bar-hint">Shown next to the icon in the menu bar. Click the icon for the next meeting, Spotify and Claude all together. The source you pick keeps checking while the dashboard is closed.</span>
+					</label>
 					<fieldset class="stack">
 						<legend class="field__label">Desktop alerts</legend>
 						<p class="field__hint">These cards keep checking while the dashboard is in the tray.</p>
@@ -60,7 +75,7 @@
 
 			<section class="panel" aria-labelledby="accounts-title">
 				<h3 id="accounts-title" class="panel__title">Accounts</h3>
-				<p class="muted">Each account becomes a card. Passwords and tokens are encrypted with your Windows login and never leave this PC except to the service they belong to.</p>
+				<p class="muted js-accounts-intro">Each account becomes a card. Passwords and tokens are encrypted with your Windows login and never leave this PC except to the service they belong to.</p>
 				<div id="account-list"></div>
 			</section>
 
@@ -73,6 +88,10 @@
 						<select name="provider" required></select>
 					</label>
 					<p class="help js-provider-help"></p>
+					<details class="guide-wrap js-guide-wrap" hidden>
+						<summary>How to set this up</summary>
+						<div class="js-guide"></div>
+					</details>
 					<label class="field">
 						<span class="field__label">Card name</span>
 						<input type="text" name="label" placeholder="e.g. Gak Design inbox" autocomplete="off">
@@ -103,7 +122,7 @@
 				<div><button type="button" class="btn btn--ghost" id="check-updates">Check for updates</button> <span class="form-status js-update-status" role="status"></span></div>
 			</section>
 
-			<p class="muted small">Bonsai Dashboard <span id="version"></span> · Setup steps for every service are in the README.</p>
+			<p class="muted small">Bonsai Dashboard <span id="version"></span> · Setup steps for each service are under "How to set this up" when you add or edit an account, and in the README.</p>
 		</div>
 	</section>
 
@@ -112,6 +131,7 @@
 	<script src="js/clawd.js"></script>
 	<script src="js/cards.js"></script>
 	<script src="js/layout.js"></script>
+	<script src="js/guide.js"></script>
 	<script src="js/settings.js"></script>
 	<script src="js/update.js"></script>
 	<script src="js/app.js"></script>

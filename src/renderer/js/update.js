@@ -19,6 +19,8 @@
 		switch (status.state) {
 			case 'dev':
 				return 'Updates only run in the installed app.';
+			case 'manual':
+				return 'The Mac app doesn’t update itself. To update it, pull the latest code and run npm run mac again.';
 			case 'checking':
 				return 'Checking…';
 			case 'current':
@@ -37,7 +39,7 @@
 	function show(status) {
 		latest = status;
 		statusText.textContent = describe(status);
-		button.disabled = ['dev', 'checking', 'downloading'].includes(status.state);
+		button.disabled = ['dev', 'manual', 'checking', 'downloading'].includes(status.state);
 
 		const offer = 'ready' === status.state && status.version !== dismissed;
 		if (offer) {

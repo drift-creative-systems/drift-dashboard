@@ -45,6 +45,21 @@ function webUrl(preset, account, messageId) {
 	return account.config.web_url || preset.webUrl;
 }
 
+/**
+ * Which emails a card lists: 'unread', 'important' (Gmail: Important and
+ * unread) or 'all'. Cards saved before the Show option only have
+ * `unread_only` (unset meant on).
+ */
+function filter(account) {
+	const show = account.config.show;
+	if (['unread', 'important', 'all'].includes(show)) {
+		return show;
+	}
+	return account.config.unread_only === false ? 'all' : 'unread';
+}
+
+const UNREAD_FIELD = { key: 'unread_only', label: 'Only show unread emails', type: 'checkbox', default: true };
+
 function make(preset) {
 	return {
 		id: preset.id,
@@ -53,12 +68,15 @@ function make(preset) {
 		interval: 2 * 60 * 1000,
 		oauth: false,
 		help: preset.help,
+		guide: preset.guide,
+		// Settings form: show older cards' unread_only as the matching Show option.
+		formConfig: (config) => (preset.filterFields.some((f) => 'show' === f.key) ? { ...config, show: filter({ config }) } : config),
 		fields: [
 			{ key: 'email', label: 'Email address', type: 'text', required: true },
 			{ key: 'password', label: preset.passwordLabel, type: 'password', secret: true, required: true },
 			{ key: 'host', label: 'IMAP server', type: 'text', placeholder: preset.host, advanced: true },
 			{ key: 'port', label: 'Port', type: 'text', placeholder: String(preset.port), advanced: true },
-			{ key: 'unread_only', label: 'Only show unread emails', type: 'checkbox', default: true },
+			...preset.filterFields,
 		],
 
 		async fetch(account, ctx) {
@@ -89,16 +107,25 @@ function make(preset) {
 				await client.connect();
 				const status = await client.status('INBOX', { messages: true, unseen: true });
 				const messages = [];
-				// Unset on cards saved before this option existed, which means on.
-				const unreadOnly = account.config.unread_only !== false;
+				const show = filter(account);
+				const unreadOnly = 'all' !== show;
+				// Important and unread: the count is of matching emails, not all unread.
+				let count = status.unseen || 0;
 
 				if (unreadOnly ? status.unseen > 0 : status.messages > 0) {
 					const lock = await client.getMailboxLock('INBOX', { readOnly: true });
 					try {
-						// Newest last in both cases, so take the end of the list.
-						const range = unreadOnly
-							? ((await client.search({ seen: false })) || []).slice(-LATEST)
-							: `${Math.max(1, status.messages - LATEST + 1)}:*`;
+						let range;
+						if (unreadOnly) {
+							// Gmail's own search (X-GM-RAW) knows which emails it marked Important.
+							const query = 'important' === show ? { seen: false, gmraw: 'is:important' } : { seen: false };
+							const found = (await client.search(query)) || [];
+							count = found.length;
+							// Newest last, so take the end of the list.
+							range = found.slice(-LATEST);
+						} else {
+							range = `${Math.max(1, status.messages - LATEST + 1)}:*`;
+						}
 						const fetchable = Array.isArray(range) ? range.length > 0 : true;
 						for await (const msg of (fetchable ? client.fetch(range, { envelope: true, flags: true, internalDate: true }) : [])) {
 							const sender = (msg.envelope.from && msg.envelope.from[0]) || {};
@@ -118,8 +145,9 @@ function make(preset) {
 				messages.sort((a, b) => b.date.localeCompare(a.date));
 				return {
 					email: account.config.email,
-					unread: status.unseen || 0,
+					unread: count,
 					unreadOnly,
+					important: 'important' === show,
 					messages,
 					url: webUrl(preset, account),
 				};
@@ -144,6 +172,18 @@ module.exports = {
 		port: 993,
 		passwordLabel: 'App password (16 letters)',
 		webUrl: 'https://mail.google.com/',
+		filterFields: [{
+			key: 'show',
+			label: 'Show',
+			type: 'select',
+			default: 'unread',
+			options: [
+				{ value: 'unread', label: 'Unread emails' },
+				{ value: 'important', label: 'Important and unread emails' },
+				{ value: 'all', label: 'Latest emails, read or not' },
+			],
+		}],
+		guide: 'Gmail inboxes',
 		help: 'Needs 2-Step Verification and an app password: myaccount.google.com/apppasswords',
 	}),
 	proton: make({
@@ -153,6 +193,8 @@ module.exports = {
 		port: 1143,
 		passwordLabel: 'Bridge password',
 		webUrl: 'https://mail.proton.me/',
+		filterFields: [UNREAD_FIELD],
+		guide: 'Proton Mail',
 		help: 'Needs Proton Mail Bridge running (paid Proton plan). Use the username and password Bridge shows.',
 	}),
 };

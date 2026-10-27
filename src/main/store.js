@@ -13,11 +13,16 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { DEFAULTS: ALERT_DEFAULTS } = require('./alerts');
+const linkapps = require('./linkapps');
+
+const MENU_BAR = ['none', 'meeting', 'spotify', 'claude'];
 
 const DEFAULT_CONFIG = {
 	settings: {
 		startWithWindows: false,
 		closeToTray: true,
+		linkApp: '', // Blank: the default browser.
+		menuBar: 'none', // Text beside the menu bar icon: none, meeting, spotify or claude.
 		alerts: { ...ALERT_DEFAULTS },
 	},
 	window: null,
@@ -118,6 +123,12 @@ function saveAccount({ id, provider, label, values }, fields) {
 		}
 		if ('color' === field.type && raw && !/^#[0-9a-f]{6}$/i.test(raw)) {
 			throw new Error(`${field.label} must be a colour like #ee4367.`);
+		}
+		if ('select' === field.type && raw && !field.options.some((o) => o.value === raw)) {
+			throw new Error(`${field.label}: pick one of the options.`);
+		}
+		if ('app' === field.type && raw && !linkapps.valid(raw)) {
+			throw new Error(`${field.label}: that app couldn't be found. Choose it again.`);
 		}
 	}
 
@@ -221,12 +232,29 @@ function settings() {
 	return config().settings;
 }
 
+/**
+ * The app chosen for links in Settings → General. Blank is the default
+ * browser; anything else must be an app that exists.
+ */
+function linkAppSetting(value, previous) {
+	if (undefined === value) {
+		return previous || '';
+	}
+	const p = String(value || '').trim();
+	if (p && !linkapps.valid(p)) {
+		throw new Error('That app couldn’t be found. Choose it again.');
+	}
+	return p;
+}
+
 function saveSettings(values) {
 	const cfg = config();
 	cfg.settings = {
 		...cfg.settings,
 		startWithWindows: Boolean(values.startWithWindows),
 		closeToTray: Boolean(values.closeToTray),
+		linkApp: linkAppSetting(values.linkApp, cfg.settings.linkApp),
+		menuBar: MENU_BAR.includes(values.menuBar) ? values.menuBar : (cfg.settings.menuBar || 'none'),
 		alerts: Object.fromEntries(Object.keys(ALERT_DEFAULTS).map((key) => [
 			key,
 			values.alerts && undefined !== values.alerts[key] ? Boolean(values.alerts[key]) : ALERT_DEFAULTS[key],
