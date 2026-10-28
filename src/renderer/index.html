@@ -68,6 +68,16 @@
 						</select>
 						<span class="field__hint js-menu-bar-hint">Shown next to the icon in the menu bar. Click the icon for the next meeting, Spotify and Claude all together. The source you pick keeps checking while the dashboard is closed.</span>
 					</label>
+					<div class="field">
+						<label class="field__label" for="general-accent">Accent colour</label>
+						<div class="color-row">
+							<input type="color" name="accentColor" id="general-accent" value="#ee4367">
+							<span class="swatches js-accent-swatches"></span>
+							<button type="button" class="btn btn--small js-accent-default">Use default</button>
+							<span class="field__hint js-accent-state"></span>
+						</div>
+						<span class="field__hint">For buttons, badges, progress bars and highlights. The default is Drift monochrome.</span>
+					</div>
 					<fieldset class="stack">
 						<legend class="field__label">Desktop alerts</legend>
 						<p class="field__hint">These cards keep checking while the dashboard is in the tray.</p>

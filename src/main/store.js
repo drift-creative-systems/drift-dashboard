@@ -23,6 +23,7 @@ const DEFAULT_CONFIG = {
 		closeToTray: true,
 		linkApp: '', // Blank: the default browser.
 		menuBar: 'none', // Text beside the menu bar icon: none, meeting, spotify or claude.
+		accentColor: '', // Blank: Drift monochrome.
 		alerts: { ...ALERT_DEFAULTS },
 	},
 	window: null,
@@ -247,6 +248,21 @@ function linkAppSetting(value, previous) {
 	return p;
 }
 
+/**
+ * The highlight colour from Settings → General. Blank is Drift monochrome;
+ * anything else must be a #rrggbb colour. Left out keeps what's saved.
+ */
+function accentSetting(value, previous) {
+	if (undefined === value) {
+		return previous || '';
+	}
+	const c = String(value || '').trim().toLowerCase();
+	if (c && !/^#[0-9a-f]{6}$/.test(c)) {
+		throw new Error('Accent colour must be a colour like #ee4367.');
+	}
+	return c;
+}
+
 function saveSettings(values) {
 	const cfg = config();
 	cfg.settings = {
@@ -255,6 +271,7 @@ function saveSettings(values) {
 		closeToTray: Boolean(values.closeToTray),
 		linkApp: linkAppSetting(values.linkApp, cfg.settings.linkApp),
 		menuBar: MENU_BAR.includes(values.menuBar) ? values.menuBar : (cfg.settings.menuBar || 'none'),
+		accentColor: accentSetting(values.accentColor, cfg.settings.accentColor),
 		alerts: Object.fromEntries(Object.keys(ALERT_DEFAULTS).map((key) => [
 			key,
 			values.alerts && undefined !== values.alerts[key] ? Boolean(values.alerts[key]) : ALERT_DEFAULTS[key],
