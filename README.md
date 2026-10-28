@@ -601,3 +601,9 @@ src/renderer/        the window: plain HTML/CSS/JS, no framework
 ### Why not Docker?
 
 Docker runs background server software. It can't draw a desktop window, and on Windows it needs Docker Desktop and WSL2 running all the time. Electron gives a real desktop app with a tray icon from the same web skills, and no extra services.
+
+## Copyright
+
+Copyright © 2026 Drift Creative Systems Ltd
+
+Drift Creative Systems Ltd. Registered in England and Wales, company number 17548220. Registered office: 167-169 Great Portland Street, 5th Floor, London W1W 5PF

@@ -1,7 +1,7 @@
 {
   "name": "drift-dashboard",
   "productName": "Drift Dashboard",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Everything at a glance: Spotify, Plex, Claude plan usage, your next gig (Drift: Record), email, calendars, Slack, ClickUp, Strava, Xbox and support tickets.",
   "author": "Drift Creative Systems",
   "license": "UNLICENSED",
@@ -20,6 +20,7 @@
   "build": {
     "appId": "uk.co.bonsaidigitalcollective.dashboard",
     "productName": "Drift Dashboard",
+    "copyright": "Copyright © 2026 Drift Creative Systems Ltd",
     "directories": {
       "output": "dist"
     },
