@@ -66,12 +66,56 @@
 
 	/* ------------------------------------------------------------------ General */
 
+	// Quick picks beside the accent colour picker.
+	const ACCENTS = [
+		{ name: 'Bonsai pink', color: '#ee4367' },
+		{ name: 'Blue', color: '#3b82f6' },
+		{ name: 'Teal', color: '#14b8a6' },
+		{ name: 'Green', color: '#22c55e' },
+		{ name: 'Amber', color: '#f59e0b' },
+		{ name: 'Purple', color: '#8b5cf6' },
+	];
+
+	/**
+	 * Like a card's icon colour, the picker always has a value, so data-set
+	 * tracks whether one's really chosen; unset means Drift monochrome.
+	 */
+	function setAccent(color) {
+		const picker = els.general.accentColor;
+		if (color) {
+			picker.value = color;
+		}
+		picker.dataset.set = color ? '1' : '';
+		els.accentState.textContent = color ? '' : 'Using Drift monochrome';
+		for (const swatch of els.accentSwatches.children) {
+			swatch.setAttribute('aria-pressed', String(Boolean(color) && swatch.dataset.color === picker.value));
+		}
+	}
+
+	function initAccent() {
+		els.accentSwatches = els.general.querySelector('.js-accent-swatches');
+		els.accentState = els.general.querySelector('.js-accent-state');
+		els.accentSwatches.replaceChildren(...ACCENTS.map((a) => h('button', {
+			type: 'button',
+			class: 'swatch',
+			title: a.name,
+			'aria-label': a.name,
+			'aria-pressed': 'false',
+			style: { '--swatch': a.color },
+			data: { color: a.color },
+			on: { click: () => setAccent(a.color) },
+		})));
+		els.general.accentColor.addEventListener('input', () => setAccent(els.general.accentColor.value));
+		els.general.querySelector('.js-accent-default').addEventListener('click', () => setAccent(''));
+	}
+
 	function fillGeneral() {
 		const s = app.getState().settings;
 		els.general.startWithWindows.checked = Boolean(s.startWithWindows);
 		els.general.closeToTray.checked = Boolean(s.closeToTray);
 		els.linkApp.replaceChildren(appSelect({ name: 'linkApp', id: 'general-link-app' }, s.linkApp || '', 'Your default browser'));
 		els.general.menuBar.value = s.menuBar || 'none';
+		setAccent(s.accentColor || '');
 		if ('darwin' === app.getState().platform) {
 			document.querySelector('.js-login-label').textContent = 'Open at login (starts in the menu bar)';
 			document.querySelector('.js-accounts-intro').textContent = 'Each account becomes a card. Passwords and tokens are encrypted with a key kept in your Mac’s keychain and never leave this Mac except to the service they belong to.';
@@ -97,6 +141,7 @@
 				closeToTray: els.general.closeToTray.checked,
 				linkApp: els.general.linkApp.value === CHOOSE ? '' : els.general.linkApp.value,
 				menuBar: els.general.menuBar.value,
+				accentColor: els.general.accentColor.dataset.set ? els.general.accentColor.value : '',
 				alerts: {
 					uptime: els.general.alertUptime.checked,
 					tickets: els.general.alertTickets.checked,
@@ -407,6 +452,7 @@
 		els.form.addEventListener('submit', save);
 		els.cancel.addEventListener('click', resetForm);
 		els.general.addEventListener('submit', saveGeneral);
+		initAccent();
 
 		resetForm();
 		fillGeneral();

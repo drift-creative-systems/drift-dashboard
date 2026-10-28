@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- **Accent colour** in Settings → General: pick any colour, or one of six swatches (including Bonsai pink), for buttons, badges, progress bars and highlights. **Use default** goes back to Drift monochrome, which is still the default. Text on accent buttons switches between black and white to suit the colour, and accent-coloured text is lightened or darkened as needed to stay readable (4.5:1) on both the dark and light themes.
+
 ## [2.0.0] - 2026-10-27
 
 ### Changed
