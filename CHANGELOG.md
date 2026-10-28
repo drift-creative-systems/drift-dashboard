@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Removed
+- The tag-triggered Release workflow (`.github/workflows/release.yml`). It needed a `RELEASES_TOKEN` secret that was never set, so every tag push started a run that had to be cancelled. Releases are built and published by hand again, as described in the README.
+
 ## [2.1.0] - 2026-10-28
 
 ### Added
