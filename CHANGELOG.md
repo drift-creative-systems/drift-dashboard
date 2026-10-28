@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.1.2] - 2026-10-28
+
+### Added
+- Copyright line ("Copyright © 2026 Drift Creative Systems Ltd") in the installer and app properties, and copyright and company details in the README. No changes to the app itself.
+
 ## [2.1.1] - 2026-10-28
 
 No changes to the app itself: this release only changes how new versions are published.
