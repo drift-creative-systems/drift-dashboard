@@ -51,6 +51,20 @@
 	}
 }
 
+/* The accent colour picked in Settings → General, set by app.js. The text
+   versions are already lightened / darkened for 4.5:1 on each theme. */
+:root.has-user-accent {
+	--accent: var(--user-accent);
+	--accent-contrast: var(--user-accent-contrast);
+	--accent-text: var(--user-accent-text-dark);
+}
+
+@media (prefers-color-scheme: light) {
+	:root.has-user-accent {
+		--accent-text: var(--user-accent-text-light);
+	}
+}
+
 /* --------------------------------------------------------------------- Base */
 
 *,
@@ -588,6 +602,25 @@ select {
 	border-radius: var(--radius-sm);
 	background: var(--surface-2);
 	cursor: pointer;
+}
+
+.swatches {
+	display: flex;
+	gap: 6px;
+}
+
+.swatch {
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 1px solid var(--border);
+	border-radius: 50%;
+	background: var(--swatch);
+	cursor: pointer;
+}
+
+.swatch[aria-pressed="true"] {
+	box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text);
 }
 
 .acct__icon {

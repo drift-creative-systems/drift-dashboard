@@ -221,8 +221,64 @@
 		}
 	}
 
+	/* ------------------------------------------------------------ Accent */
+
+	const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+
+	// WCAG relative luminance and contrast ratio.
+	function luminance(hex) {
+		const [r, g, b] = rgb(hex).map((v) => {
+			const c = v / 255;
+			return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+		});
+		return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+	}
+
+	function contrast(a, b) {
+		const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+		return (hi + 0.05) / (lo + 0.05);
+	}
+
+	function mix(hex, toward, amount) {
+		const a = rgb(hex);
+		const b = rgb(toward);
+		return `#${a.map((v, i) => Math.round(v + (b[i] - v) * amount).toString(16).padStart(2, '0')).join('')}`;
+	}
+
+	/**
+	 * The accent nudged toward white (dark theme) or black (light theme)
+	 * until it's readable as text (4.5:1) on every surface it sits on.
+	 */
+	function readable(hex, toward, surfaces) {
+		for (let step = 0; step <= 20; step++) {
+			const c = mix(hex, toward, step / 20);
+			if (surfaces.every((s) => contrast(c, s) >= 4.5)) {
+				return c;
+			}
+		}
+		return toward;
+	}
+
+	/**
+	 * Settings → General's accent colour, as CSS variables that app.css swaps
+	 * in for the monochrome ones. Blank leaves Drift monochrome.
+	 */
+	function applyAccent(color) {
+		const root = document.documentElement;
+		root.classList.toggle('has-user-accent', Boolean(color));
+		if (!color) {
+			return;
+		}
+		root.style.setProperty('--user-accent', color);
+		root.style.setProperty('--user-accent-contrast', contrast(color, '#000000') >= contrast(color, '#ffffff') ? '#000' : '#fff');
+		// The surfaces from app.css's dark and light tokens.
+		root.style.setProperty('--user-accent-text-dark', readable(color, '#ffffff', ['#0b0c0d', '#151618', '#1d1f22']));
+		root.style.setProperty('--user-accent-text-light', readable(color, '#000000', ['#f2f3f5', '#ffffff', '#f6f7f8']));
+	}
+
 	function setState(next) {
 		state = next;
+		applyAccent(next.settings && next.settings.accentColor);
 		for (const snapshot of next.cards) {
 			cards.set(snapshot.id, snapshot);
 		}
@@ -257,6 +313,7 @@
 
 	async function init() {
 		state = await window.dashboard.getState();
+		applyAccent(state.settings && state.settings.accentColor);
 		for (const snapshot of state.cards) {
 			cards.set(snapshot.id, snapshot);
 		}
